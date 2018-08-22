@@ -114,10 +114,10 @@ def chFuncProb(fun, grad, var_f, var_df, args):
 
 
 
-def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-5, on_step=None, maxiters=None):
+def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None):
+
 
     verbose = False
-
     labels = {}
     if isinstance(obj, list) or isinstance(obj, tuple):
         obj = ch.concatenate([f.ravel() for f in obj])
@@ -125,11 +125,20 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
         labels = obj
         obj = ch.concatenate([f.ravel() for f in list(obj.values())])
 
-    num_unique_ids = len(np.unique(np.array([id(freevar) for freevar in free_variables])))
-    if num_unique_ids != len(free_variables):
-        raise Exception('The "free_variables" param contains duplicate variables.')
+    unique_ids = np.unique(np.array([id(freevar) for freevar in free_variables]))
+    num_unique_ids = len(unique_ids)
 
-    obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
+    if num_unique_ids != len(free_variables):
+       raise Exception('The "free_variables" param contains duplicate variables.')
+    #print ('***********************')
+    #print ('Before creating ChInputsStacked')
+    #print (type(obj))
+    #print (obj.x.shape)
+    #_tx = np.concatenate([freevar.r.ravel() for freevar in free_variables])
+    #print ('r.ravel', _tx.shape)
+    #print ('***********************')
+    #obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
+    
 
     def call_cb():
         if on_step is not None:
@@ -143,12 +152,14 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
             report_line += '%s: %.2e | ' % (label, np.sum(objective.r**2))
         if len(labels) > 0:
             report_line += '\n'
+        import sys
         sys.stderr.write(report_line)
 
     call_cb()
 
     # pif = print-if-verbose.
     # can't use "print" because it's a statement, not a fn
+    verbose = False
     pif = lambda x: print(x) if verbose else 0
 
     # optimization parms
@@ -161,11 +172,12 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     tm = time.time()
     pif('computing Jacobian...')
     J = obj.J
-
+    #print ('J shape', J.shape)
+    #print (J)
     if sp.issparse(J):
         assert(J.nnz > 0)
-    pif('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
-
+    print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
+    print ('p', p)
     if J.shape[1] != p.size:
         import pdb; pdb.set_trace()
     assert(J.shape[1] == p.size)
@@ -179,7 +191,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     bestParams = p
     bestEval = obj.r
     numWorse = 0
-
+    #_yes = input ('press <enter> to continue')
     while (not stop) and (k < k_max):
         k += 1
 
@@ -187,20 +199,25 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
         arrJ = J
         if sp.issparse(J):
             arrJ = J.toarray()
-        dp = col(lr*np.array(J)) + momentum*dp
-
+            
+        #import ipdb
+        #ipdb.set_trace()
+        dp = col(lr*np.array(arrJ)) + momentum*dp
+        import ipdb
+        ipdb.set_trace()
         p_new = p - dp
-
+        #print ('Gradient', obj.J.shape)
+        print (obj.J)
         lr = lr*decay
+        
 
         obj.x = p_new.ravel()
 
         if norm(dp) < tol:
-            pif('stopping due to small update')
+            pif('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
             stop = True
 
         J = obj.J.copy()
-
         if bestEval > obj.r:
             numWorse = 0
             bestEval = obj.r.copy()
@@ -214,12 +231,12 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
                 obj.r
 
         p = col(obj.x.r)
-
         call_cb()
 
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
-
+        import sys
+        sys.exit()
     return obj.free_variables
 
 
@@ -347,6 +364,7 @@ def scipyGradCheck(fun, x0):
 
 def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, callback=None, options=None):
 
+
     if method == 'dogleg':
         if options is None: options = {}
         return _minimize_dogleg(fun, free_variables=x0, on_step=callback, **options)
@@ -426,9 +444,11 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, ca
         changevars(vs, obj, obj_scalar, free_variables)
 
         if False: # faster, at least on some problems
-            result = np.concatenate([np.array(obj_scalar.lop(wrt, np.array([[1]]))).ravel() for wrt in free_variables])            
+            result = np.concatenate([np.array(obj_scalar.lop(wrt, np.array([[1]]))).ravel() for wrt in free_variables])
         else:
             jacs = [obj_scalar.dr_wrt(wrt) for wrt in free_variables]
+            #import ipdb
+            #ipdb.set_trace()
             for idx, jac in enumerate(jacs):
                 if sp.issparse(jac):
                     jacs[idx] = jacs[idx].toarray()
@@ -460,6 +480,7 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, ca
         # x1 = probLineSearchMin(np.concatenate([free_variable.r.ravel() for free_variable in free_variables]), residuals, scalar_jacfunc, args=(obj, obj_scalar, free_variables), df_vars=options['df_vars'], on_step=callback, maxnumfuneval=maxiter)
     else:
         # ipdb.set_trace()
+        print ('Invoking Scipy optimize')
         x1 = scipy.optimize.minimize(
             method=method,
             fun=residuals,
@@ -486,6 +507,9 @@ class ChInputsStacked(ch.Ch):
     #         return hstack([self.obj.dr_wrt(freevar) for freevar in self.free_variables])
     
     def dr_wrt(self, wrt):
+        #print ('obj --->', type(self.obj))
+        #print (wrt)
+        #_ = input ('dr_wrt ')
         if wrt is self.x:
             mtxs = []
             for freevar in self.free_variables:
@@ -496,8 +520,10 @@ class ChInputsStacked(ch.Ch):
                     except:
                         mtxs.append(new_mtx.tocsc()[:,freevar.idxs])
                 else:
-                    mtxs.append(self.obj.dr_wrt(freevar))
-            return hstack(mtxs)
+                    mtxs.append(self.obj.dr_wrt(freevar, reverse_mode=False))
+            _t = hstack(mtxs)
+            #print ('_t', _t.shape)
+            return _t
             #return hstack([self.obj.dr_wrt(freevar) for freevar in self.free_variables])
     
     def on_changed(self, which):
@@ -527,6 +553,10 @@ class ChInputsStacked(ch.Ch):
 
     @property
     def J(self):
+        #print ('J() : computing Jacobian')
+        #print ('self.x', self.x.shape)
+        #print (self.x)
+        #print ('------------------------------')
         result = self.dr_wrt(self.x).copy()
         return np.atleast_2d(result) if not sp.issparse(result) else result
     

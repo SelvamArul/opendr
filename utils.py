@@ -1,6 +1,6 @@
 __author__ = 'pol'
 
-from utils import *
+#from utils import *
 import opendr
 import geometry
 import numpy as np
@@ -13,7 +13,10 @@ import chumpy as ch
 
 
 def transformObject(v, vn, chScale, chObjAz, chPosition):
-
+    #print ('utils.py:16  transformObject')
+    #print ('v', type(v))
+    #import ipdb
+    #ipdb.set_trace()
     if chScale.size == 1:
         scaleMat = geometry.Scale(x=chScale[0], y=chScale[0],z=chScale[0])[0:3,0:3]
     elif chScale.size == 2:
@@ -42,9 +45,11 @@ def createRenderer(glMode, cameraParams, v, vc, f_list, vn, uv, haveTextures_lis
     renderer.set(glMode=glMode)
 
     vflat = [item for sublist in v for item in sublist]
+
     if len(vflat)==1:
         vstack = vflat[0]
     else:
+
         vstack = ch.vstack(vflat)
 
     camera, modelRotation, _ = setupCamera(vstack, cameraParams)
@@ -55,8 +60,7 @@ def createRenderer(glMode, cameraParams, v, vc, f_list, vn, uv, haveTextures_lis
     setupTexturedRenderer(renderer, vstack, vflat, f_list, vcflat, vnflat,  uv, haveTextures_list, textures_list, camera, frustum, win)
     return renderer
 
-
-def createRenderer(glMode, cameraParams, v, vc, f_list, vn, uv, haveTextures_list, textures_list, frustum, win ):
+def create_renderer_centauro(glMode,cameraParams, v, vc, f_list, vn, uv, haveTextures_list, textures_list, frustum, win, tf_world_2_camera ):
     renderer = TexturedRenderer()
     renderer.set(glMode=glMode)
 
@@ -68,7 +72,7 @@ def createRenderer(glMode, cameraParams, v, vc, f_list, vn, uv, haveTextures_lis
 
         vstack = ch.vstack(vflat)
 
-    camera, modelRotation, _ = setupCamera(vstack, cameraParams)
+    camera, modelRotation, _ = setupCamera_centauro(vstack, cameraParams, tf_world_2_camera)
 
     vnflat = [item for sublist in vn for item in sublist]
     vcflat = [item for sublist in vc for item in sublist]
@@ -258,10 +262,41 @@ def getCubeData(scale=(2,2,2), st=False, rgb=np.array([1.0, 1.0, 1.0])):
         return verticesCube, facesCube, normalsCube, vColorsCube, texturesListCube, haveTexturesCube
 
 
+def setupCamera_centauro(v, cameraParams, tf_world_2_camera):
+    '''
+    Simplified setup for the centauro toy example or
+    most of cases where we don't need to regress for camera parameters
+    in : tf_world_2_camera  (Preferably use Matrix44.look_at() to create this)
+    '''
+    modelRotation = tf_world_2_camera[0:3,0:3]
+
+    chRod = opendr.geometry.Rodrigues(rt=modelRotation).reshape(3)
+    chTranslation = tf_world_2_camera[0:3,3]
+    
+    camera = ProjectPoints(v=v, rt=rotation, t=translation, f = 1000*cameraParams['chCamFocalLength']*cameraParams['a'], c=cameraParams['c'], k=ch.zeros(5))
+    
+    #print ('camera shape', camera.shape)
+    #print ('camera   ', camera)
+
+    flipXRotation = np.array([[1.0, 0.0, 0.0, 0.0],
+            [0.0, -1.0, 0., 0.0],
+            [0.0, 0., -1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]])
+
+    camera.openglMat = flipXRotation #Needed to match OpenGL flipped axis.
+    
+    # chMVMat construct might be wrong
+    # From line 308 chInvCam = ch.inv(chMVMat)
+    # It seems, chMVMat is  tf_camera_2_world
+    # In any case, the create_renderer function ignores this returned variable
+    chMVMat = ch.inv(tf_world_2_camera)
+
+    return camera, modelRotation, chMVMat
 
 def setupCamera(v, cameraParams):
 
     chDistMat = geometry.Translate(x=0, y=cameraParams['Zshift'], z=cameraParams['chCamHeight'])
+    print ('chDistMat', chDistMat)
 
     chRotElMat = geometry.RotateX(a=-cameraParams['chCamEl'])
 
@@ -274,6 +309,14 @@ def setupCamera(v, cameraParams):
 
     chMVMat = ch.dot(chCamModelWorld, flipZYRotation)
 
+    print ('------------------------------------------------')
+    print ('chMVMat \n', chMVMat)
+    print ('------------------------------------------------')
+    # save chMVMat as binary file
+    np.save('extrinsics.npy', chMVMat, allow_pickle=False)
+    #import ipdb
+    #ipdb.set_trace()
+
     chInvCam = ch.inv(chMVMat)
 
     modelRotation = chInvCam[0:3,0:3]
@@ -284,6 +327,13 @@ def setupCamera(v, cameraParams):
     translation, rotation = (chTranslation, chRod)
 
     camera = ProjectPoints(v=v, rt=rotation, t=translation, f = 1000*cameraParams['chCamFocalLength']*cameraParams['a'], c=cameraParams['c'], k=ch.zeros(5))
+
+    np.save('intrinsics.npy', camera.camera_mtx, allow_pickle=False)
+    #print ('camera shape', camera.shape)
+    #print ('camera   ', camera)
+    print ('camera.view_mtx', camera.view_mtx)
+    #import ipdb
+    #ipdb.set_trace()
 
     flipXRotation = np.array([[1.0, 0.0, 0.0, 0.0],
             [0.0, -1.0, 0., 0.0],
@@ -319,6 +369,13 @@ def computeGlobalAndDirectionalLighting(vn, vc, chLightAzimuth, chLightElevation
     return vc_list
 
 def computeGlobalAndPointLighting(v, vn, vc, light_pos, globalConstant, light_color):
+    # [In]: v   list(np.array)
+    # [In]: vn  list(np.array)
+    # [In]: vc  list(np.array)
+    # [In]: light_pos np.array([x, y, y])
+    # [In]: globalConstant np.array([r, g, b])
+    # [In]: light_color np.array([r, g, b])
+
     # Construct point light source
     rangeMeshes = range(len(vn))
     vc_list = []

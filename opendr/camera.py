@@ -131,7 +131,9 @@ class ProjectPoints(Ch):
 
     @depends_on('f','c')
     def camera_mtx(self):
-        return np.array([[self.f.r[0], 0, self.c.r[0]],[0., -self.f.r[1], self.c.r[1]],[0.,0,1.]], dtype=np.float64)
+        _t = np.array([[self.f.r[0], 0, self.c.r[0]],[0., -self.f.r[1], self.c.r[1]],[0.,0,1.]], dtype=np.float64)
+        print ('camera_mtx\n', _t)
+        return _t
         # return np.array([[self.f.r[0], 0, self.c.r[0]],[0., self.f.r[1], self.c.r[1]],[0.,0.,1.]], dtype=np.float64)
         # return np.array([[fx / cx, 0, 0], [0, fy / cy, 0], [0, 0, 1], [0, 0, 1, ]], dtype=np.float64)
 

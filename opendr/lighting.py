@@ -198,7 +198,6 @@ class LambertianPointLight(Ch):
         if len(ldn_args) > 0:
             self.ldn.set(**ldn_args)
             self._lpl.a.a.a = self.ldn.reshape((-1,1))
-
         if 'num_verts' in which or 'light_color' in which:
             # nc = self.num_channels
             # IS = np.arange(self.num_verts*nc)
@@ -206,7 +205,6 @@ class LambertianPointLight(Ch):
             # data = (row(self.light_color)*np.ones((self.num_verts, 3))).ravel()
             # mtx = sp.csc_matrix((data, (IS,JS)), shape=(self.num_verts*3, self.num_verts))
             self._lpl.a.a.b = self.light_color.reshape((1,self.num_channels))
-
         if 'vc' in which:
             self._lpl.a.b = self.vc.reshape((-1,self.num_channels))
 

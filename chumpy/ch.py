@@ -109,6 +109,11 @@ class Ch(object):
         defs.update(kwargs)
         result.set(**defs)
         
+        #if hasattr(result, 'x'):
+            #for i in args:
+                #print ('args', i)
+            #print ('ch result', result.x)
+            #print (result.x.shape)
         return result
 
     @classmethod
@@ -234,9 +239,9 @@ class Ch(object):
         if hasattr(self, 'label'):
             where_to_print.write(('%s: %.' + str(num_decimals) + 'e | ') % (self.label, np.sum(self.r**2)))
         for dterm in self.dterms:
-            dt = getattr(self, dterm)            
+            dt = getattr(self, dterm)
             if hasattr(dt, 'dterms'):
-                dt.print_labeled_residuals(print_newline=False, where_to_print=where_to_print)            
+                dt.print_labeled_residuals(print_newline=False, where_to_print=where_to_print)
         if print_newline:
             where_to_print.write(('%.' + str(num_decimals) + 'e\n') % (np.sum(self.r**2),))
         
@@ -251,7 +256,7 @@ class Ch(object):
         
     def compute_dr_wrt(self,wrt):
         """Default method for objects that just contain a number or ndarray"""
-        if wrt is self: # special base case  
+        if wrt is self: # special base case
             return sp.eye(self.x.size, self.x.size)
             #return np.array([[1]])
         return None
@@ -265,6 +270,7 @@ class Ch(object):
 
         result = self.compute_dr_wrt(wrt)
         if result is not None:
+            #print ('_compute_dr_wrt_sliced returning', result)
             return result
 
         # What allows slicing.
@@ -602,9 +608,11 @@ class Ch(object):
         
         self._call_on_changed()
 
-        drs = []        
+        drs = []
 
         direct_dr = self._compute_dr_wrt_sliced(wrt)
+        #print ('lmult_wrt  lhs, wrt', lhs, wrt)
+        #print ('lmult_wrt  direct_dr, wrt', direct_dr)
 
         if direct_dr != None:
             drs.append(self._superdot(lhs, direct_dr))
@@ -618,9 +626,10 @@ class Ch(object):
                     import pdb; pdb.set_trace()
 
                 indirect_dr = p.lmult_wrt(self._superdot(lhs, self._compute_dr_wrt_sliced(p)), wrt)
+                #print ('lmult_wrt  indirect_dr', indirect_dr)
                 if indirect_dr is not None:
                     drs.append(indirect_dr)
-
+        #print ('lmult_wrt drs', drs)
         if len(drs)==0:
             result = None
 
@@ -629,7 +638,7 @@ class Ch(object):
 
         else:
             result = reduce(lambda x, y: x+y, drs)
-
+        #print ('.;.;.;.;.;.;.;.;.;.;.;.;.;.;')
         return result
         
 
@@ -679,21 +688,22 @@ class Ch(object):
         return self._superdot(dr, rhs)
 
     def dr_wrt(self, wrt, reverse_mode=False):
+        #print ('dr_wrt', wrt, type(self))
         self._call_on_changed()
         # ipdb.set_trace()
-        drs = []        
+        drs = []
 
         if wrt in self._cache['drs']:
             return self._cache['drs'][wrt]
 
         direct_dr = self._compute_dr_wrt_sliced(wrt)
-
+        #print ('direct_dr', direct_dr)
         if direct_dr is not None:
-            drs.append(direct_dr)                
+            drs.append(direct_dr)
 
         propnames = set(_props_for(self.__class__))
         for k in set(self.dterms).intersection(propnames.union(set(self.__dict__.keys()))):
-
+            #print ('k', k)
             p = getattr(self, k)
 
             if hasattr(p, 'dterms') and p is not wrt:
@@ -701,26 +711,44 @@ class Ch(object):
                 indirect_dr = None
 
                 if reverse_mode:
+
                     lhs = self._compute_dr_wrt_sliced(p)
+                    #print ('lhs', lhs)
+                    #print ('lhs --->', lhs.shape)
+                    #print ('p --->', p.shape )
                     if isinstance(lhs, LinearOperator):
                         dr2 = p.dr_wrt(wrt)
+                        #print ('dr2 --->', dr2.shape)
                         indirect_dr = lhs.matmat(dr2) if dr2 != None else None
+                        
                     else:
+                        #print (type(lhs), lhs)
                         indirect_dr = p.lmult_wrt(lhs, wrt)
+                        #print (type(indirect_dr))
+                        #print ('indirect_dr --->', indirect_dr.shape)
+                        #if not indirect_dr is None:
+                         #   print (type(indirect_dr), indirect_dr.shape)
                 else: # forward mode
                     dr2 = p.dr_wrt(wrt)
                     if dr2 is not None:
                         # ipdb.set_trace()
                         indirect_dr = self.compute_rop(p, rhs=dr2)
-
+                #print ('indirect_dr ', indirect_dr)
                 if indirect_dr is not None:
                     drs.append(indirect_dr)
-
+                #print ('indirect_dr', indirect_dr)
+        #print ('------------------------------------------')
+        #print ('------------------------------------------')
+        #print ('dr_wrt ch.py 732:')
+        #print ('wrt', type(wrt), wrt.shape)
+        #print (wrt)
+        #print ('drs', len(drs))
         if len(drs)==0:
             result = None
 
         elif len(drs)==1:
             result = drs[0]
+            #print ('result drs ', result)
 
         else:
             if not np.any([isinstance(a, LinearOperator) for a in drs]):
@@ -834,8 +862,13 @@ class Ch(object):
                     if sz > 1024.: 
                         sz /= 1024
                         unit = 'T'
-                        
-                    dot_file_contents = re.sub('<<<%s>>>' % s, '#%02x%02x%02x",label="%d%s' % (szpct*255, 0, (1-szpct)*255, sz, unit), dot_file_contents)
+                    
+                    szpct_t = int(np.asscalar(szpct))
+                    sz_t = int(sz)
+                    print (type(szpct_t), szpct_t)
+                    print (sz)
+                    print (type(unit))
+                    dot_file_contents = re.sub('<<<%s>>>' % s, '#%02x%02x%02x",label="%d%s' % (szpct_t*255, 0, (1-szpct_t)*255, sz_t, unit), dot_file_contents)
 
         dot_file = tempfile.NamedTemporaryFile()
         dot_file.write(bytes(dot_file_contents, 'UTF-8'))
@@ -1466,6 +1499,7 @@ class subtract(Ch):
     dterms = 'a', 'b'
 
     def compute_r(self):
+        #print ('in subtract', self.a.r, self.b.r)
         return self.a.r - self.b.r
 
     def compute_dr_wrt(self, wrt):
@@ -1473,12 +1507,36 @@ class subtract(Ch):
             return None
 
         m = 1. if wrt is self.a else -1.
-        return _broadcast_matrix(self.a, self.b, wrt, m)
+        _t = _broadcast_matrix(self.a, self.b, wrt, m)
+        
+        return _t
 
 
-    
-    
-    
+#class ais_identity(Ch):
+    #dterms = 'x'
+
+    #def compute_r(self):
+        ##print ('in subtract', self.a.r, self.b.r)
+        #return self.x.r.ravel()
+
+    ## place holder for the gradient
+    ## This interface is to allow manually entering the gradient
+    #self._dx = 0
+    #self.is_gradient_set = False
+    #def set_gradient(self, _dx):
+        #self._dx = _dx
+        #self.is_gradient_set = True
+
+    #def compute_dr_wrt(self, wrt):
+        #if wrt is self.x:
+            ## reset the gradient set flag
+            #self.is_gradient_set = False
+            #if not self.is_gradient_set:
+                ## enter the actual gradient computation
+                #return np.ones(self.x.r.ravel().shape)
+            #else:
+                #return self._dx
+
 class ch_power (Ch):
     """Given vector \f$x\f$, computes \f$x^2\f$ and \f$\frac{dx^2}{x}\f$"""
     dterms = 'x', 'pow'
@@ -1487,7 +1545,7 @@ class ch_power (Ch):
         return self.safe_power(self.x.r, self.pow.r)
 
     def compute_dr_wrt(self, wrt):
-
+        #print ('ch_power x', self.x.r)
         if wrt is not self.x and wrt is not self.pow:
             return None
             
@@ -1499,6 +1557,7 @@ class ch_power (Ch):
             result.append(np.log(x) * self.safe_power(x, pow))
             
         data = reduce(lambda x, y : x + y, result).ravel()
+        #print ('data ch_power', data)
 
         return _broadcast_matrix(self.x, self.pow, wrt, data)
 

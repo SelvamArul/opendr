@@ -520,7 +520,14 @@ class BaseRenderer(Ch):
         self.vbo_colors.bind()
 
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))), np.float32))
-        GL.glUniformMatrix4fv(self.MVP_location, 1, GL.GL_TRUE, np.dot(self.projectionMatrix, view_mtx))
+
+        _t = np.dot(self.projectionMatrix, view_mtx)
+        #print ('***************1***************')
+        #print ('******************************')
+        #print ('MVP matrix', _t)
+        #print ('******************************')
+        #print ('******************************')
+        GL.glUniformMatrix4fv(self.MVP_location, 1, GL.GL_TRUE, _t)
 
         GL.glDrawElements(GL.GL_TRIANGLES, len(self.vbo_indices)*3, GL.GL_UNSIGNED_INT, None)
 
@@ -731,7 +738,16 @@ class BaseRenderer(Ch):
         GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, self.fbo)
 
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))),np.float32))
-        GL.glUniformMatrix4fv(self.MVP_location, 1, GL.GL_TRUE, np.dot(self.projectionMatrix, view_mtx))
+        
+        _t = np.dot(self.projectionMatrix, view_mtx)
+        #print ('***************2***************')
+        #print ('******************************')
+        #print ('MVP matrix', _t)
+        #print ('******************************')
+        #print ('******************************')
+        
+        
+        GL.glUniformMatrix4fv(self.MVP_location, 1, GL.GL_TRUE, _t)
 
         # if primtype == GL.GL_LINES:
         #     GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
@@ -1280,6 +1296,9 @@ class TexturedRenderer(ColoredRenderer):
         self.vao_tex_mesh_list = []
         self.vbo_uvs_mesh = []
         self.textureID_mesh_list = []
+        
+        #import ipdb
+        #ipdb.set_trace()
 
         for mesh in range(len(self.f_list)):
 
@@ -1464,6 +1483,13 @@ class TexturedRenderer(ColoredRenderer):
 
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))),np.float32))
         MVP = np.dot(self.projectionMatrix, view_mtx)
+
+        _t = np.dot(self.projectionMatrix, view_mtx)
+        #print ('**************3****************')
+        #print ('******************************')
+        #print ('MVP matrix', _t)
+        #print ('******************************')
+        #print ('******************************')
 
         for polygons in np.arange(len(self.f_list[mesh])):
 
@@ -1684,6 +1710,13 @@ class TexturedRenderer(ColoredRenderer):
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))),np.float32))
         MVP = np.dot(self.projectionMatrix, view_mtx)
+        
+        #print ('**************4****************')
+        #print ('******************************')
+        #print ('MVP matrix', MVP)
+        #np.save('mvp_matrix.npy', MVP)
+        #print ('******************************')
+        #print ('******************************')
 
         for mesh in range(len(self.f_list)):
 
