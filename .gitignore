@@ -1,0 +1,10 @@
+*/__pycache__.* 
+*/__pycache__/* 
+*__pycache__/* 
+cpp/CMakeFiles*
+cpp/*
+data/*
+*.pyc
+*.txt
+*.npy
+*.kdev4
