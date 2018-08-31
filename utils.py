@@ -296,7 +296,7 @@ def setupCamera_centauro(v, cameraParams, tf_world_2_camera):
 def setupCamera(v, cameraParams):
 
     chDistMat = geometry.Translate(x=0, y=cameraParams['Zshift'], z=cameraParams['chCamHeight'])
-    print ('chDistMat', chDistMat)
+    #print ('chDistMat', chDistMat)
 
     chRotElMat = geometry.RotateX(a=-cameraParams['chCamEl'])
 
@@ -309,9 +309,9 @@ def setupCamera(v, cameraParams):
 
     chMVMat = ch.dot(chCamModelWorld, flipZYRotation)
 
-    print ('------------------------------------------------')
-    print ('chMVMat \n', chMVMat)
-    print ('------------------------------------------------')
+    #print ('------------------------------------------------')
+    #print ('chMVMat \n', chMVMat)
+    #print ('------------------------------------------------')
     # save chMVMat as binary file
     np.save('extrinsics.npy', chMVMat, allow_pickle=False)
     #import ipdb
@@ -327,11 +327,14 @@ def setupCamera(v, cameraParams):
     translation, rotation = (chTranslation, chRod)
 
     camera = ProjectPoints(v=v, rt=rotation, t=translation, f = 1000*cameraParams['chCamFocalLength']*cameraParams['a'], c=cameraParams['c'], k=ch.zeros(5))
+    _f = 1000 * cameraParams['chCamFocalLength'] * cameraParams['a']
+    _c = cameraParams['c']
 
-    np.save('intrinsics.npy', camera.camera_mtx, allow_pickle=False)
-    #print ('camera shape', camera.shape)
-    #print ('camera   ', camera)
-    print ('camera.view_mtx', camera.view_mtx)
+    #np.save('intrinsics.npy', camera.camera_mtx, allow_pickle=False)
+    ##print ('camera shape', camera.shape)
+    ##print ('camera   ', camera)
+    print ('camera.camera_mtx', camera.camera_mtx)
+    np.save('projection_matrix', camera.camera_mtx)
     #import ipdb
     #ipdb.set_trace()
 
