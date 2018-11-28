@@ -116,7 +116,6 @@ def chFuncProb(fun, grad, var_f, var_df, args):
 
 def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None):
 
-
     verbose = False
     labels = {}
     if isinstance(obj, list) or isinstance(obj, tuple):
@@ -130,14 +129,14 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
     if num_unique_ids != len(free_variables):
        raise Exception('The "free_variables" param contains duplicate variables.')
-    #print ('***********************')
-    #print ('Before creating ChInputsStacked')
-    #print (type(obj))
-    #print (obj.x.shape)
-    #_tx = np.concatenate([freevar.r.ravel() for freevar in free_variables])
-    #print ('r.ravel', _tx.shape)
-    #print ('***********************')
-    #obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
+    # print ('***********************')
+    # print ('Before creating ChInputsStacked')
+    # print (type(obj))
+    # print (obj.x.shape)
+    # _tx = np.concatenate([freevar.r.ravel() for freevar in free_variables])
+    # print ('r.ravel', _tx.shape)
+    # print ('***********************')
+    obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
     
 
     def call_cb():
@@ -166,7 +165,6 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     k_max = maxiters
 
     k = 0
-
     p = col(obj.x.r)
 
     tm = time.time()
@@ -200,14 +198,15 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
         if sp.issparse(J):
             arrJ = J.toarray()
             
-        #import ipdb
-        #ipdb.set_trace()
         dp = col(lr*np.array(arrJ)) + momentum*dp
-        import ipdb
-        ipdb.set_trace()
+        # import ipdb
+        # ipdb.set_trace()
+        if p.shape != dp.shape:
+            import ipdb
+            ipdb.set_trace()
         p_new = p - dp
         #print ('Gradient', obj.J.shape)
-        print (obj.J)
+        # print (obj.J)
         lr = lr*decay
         
 
@@ -235,8 +234,6 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
-        import sys
-        sys.exit()
     return obj.free_variables
 
 
