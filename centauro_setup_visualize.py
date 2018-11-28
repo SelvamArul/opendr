@@ -373,8 +373,10 @@ rendererGT = ch.Ch(renderer.r.copy()) #Fix the GT position
 
 #positionTF = ch.Ch([0.1, 0.1, HEIGHT_OF_TABLE,])
 
-positionTF[0] = 0.02
-positionTF[1] = 0.02
+positionTF[0] = 0.03
+positionTF[1] = 0.03
+
+# azimuthTF[0] = 2.0 * np.pi * (2 / 360.0) 
 
 #Vary cube scale:
 #chPositionGT[0] = 0.01
@@ -393,7 +395,7 @@ difference = renderer - rendererGT
 
 print ('=======================>','difference', type(difference))
 
-gpModel = gaussian_pyramid(difference)
+gpModel = gaussian_pyramid(difference).sum()
 
 #sys.exit('Alles Gut')
 #plt.title('Init object')
@@ -406,11 +408,11 @@ def cb(_):
 
 global method
 methods = ['dogleg', 'minimize', 'BFGS', 'L-BFGS-B', 'Nelder-Mead', 'SGDMom']
-method = 2
+method = 1
 
 options = {'disp': True, 'maxiter': 1000, 'lr':2e-4, 'momentum' : 0.4, 'decay' :0.9, 'tol' : 1e-7}
 
-ch.minimize({'raw': gpModel}, bounds=None, method=methods[method], x0=[positionTF[0], positionTF[1],] , callback=cb, options=options)
+ch.minimize({'raw': gpModel}, bounds=None, method=methods[method], x0=[positionTF[0], positionTF[1]] , callback=cb, options=options)
 
 plt.figure()
 plt.title('Fitted object')
@@ -432,6 +434,7 @@ plt.show(0.1)
 
 print ('Optimized values')
 print (positionTF[0], positionTF[1])
+print (azimuthTF)
 print ('Completed ')
 
 #Clean up.
