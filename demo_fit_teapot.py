@@ -96,6 +96,8 @@ import shape_model
 #You can get the teapot data from here: https://drive.google.com/open?id=1JO5ZsXHb_KTsjFMFx7rxY0YVAwnM3TMY
 filePath = 'data/teapotModel.pkl'
 teapotModel = shape_model.loadObject(filePath)
+
+
 faces = teapotModel['faces']
 
 # %% Sample random shape Params
@@ -145,13 +147,23 @@ v_transf, vn_transf = transformObject(v, vn, chScaleGT, chAzimuthGT, chPositionG
 
 vc_illuminated = computeGlobalAndDirectionalLighting(vn_transf, VColors, chLightAzimuthGT, chLightElevationGT, chLightIntensityGT, chGlobalConstantGT)
 
+
+
+def list_summary(l):
+    print ( 'Length ', len(l))
+    for i, o in enumerate(l):
+        print ('Type of ', i, ' is ', type(o))
+        if isinstance(o, np.ndarray) or isinstance(o, ch.Ch):
+            print ('shape ', o.shape )
+
 v_scene += [v_transf]
 f_list_scene += [smFaces]
 vc_scene += [vc_illuminated]
 vn_scene += [vn_transf]
-uv_scene += [UVs]
+uv_scene += [[UVs]]
 haveTextures_list_scene += [HaveTextures]
 textures_list_scene += [TexturesList]
+
 
 #COnfigure lighting
 lightParamsGT = {'chLightAzimuth': chLightAzimuthGT, 'chLightElevation': chLightElevationGT, 'chLightIntensity': chLightIntensityGT, 'chGlobalConstant':chGlobalConstantGT}
@@ -180,6 +192,13 @@ plt.title('GT object')
 plt.imshow(renderer.r)
 
 rendererGT = ch.Ch(renderer.r.copy()) #Fix the GT position
+
+plt.show(0.1)
+
+# import ipdb; ipdb.set_trace()
+
+import sys
+sys.exit()
 
 #Vary teapot PCA shape:
 chShapeParams[0] = chShapeParams[0].r + 2

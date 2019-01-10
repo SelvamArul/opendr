@@ -100,6 +100,13 @@ v_transf, vn_transf = transformObject([verticesCube], [normalsCube], chScaleGT, 
 
 vc_illuminated = computeGlobalAndDirectionalLighting(vn_transf, [chCubeVCColors], chLightAzimuthGT, chLightElevationGT, chLightIntensityGT, chGlobalConstantGT)
 
+def list_summary(l):
+    print ( 'Length ', len(l))
+    for i, o in enumerate(l):
+        print ('Type of ', i, ' is ', type(o))
+        if isinstance(o, np.ndarray) or isinstance(o, ch.Ch):
+            print ('shape ', o.shape )
+
 v_scene += [v_transf]
 f_list_scene += [[[facesCube]]]
 vc_scene += [vc_illuminated]
@@ -117,6 +124,8 @@ a1 = 3.657  #Aspect ratio / mm to pixels
 a2 = 3.657  #Aspect ratio / mm to pixels
 
 cameraParamsGT = {'Zshift':ZshiftGT, 'chCamEl': chCamElGT, 'chCamHeight':chCamHeightGT, 'chCamFocalLength':chCamFocalLengthGT, 'a':np.array([a1,a2]), 'width': width, 'height':height, 'c':np.array([c0, c1])}
+
+import ipdb; ipdb.set_trace()
 
 #Create renderer object
 renderer = createRenderer(glMode, cameraParamsGT, v_scene, vc_scene, f_list_scene, vn_scene, uv_scene, haveTextures_list_scene,
