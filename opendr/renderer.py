@@ -334,7 +334,6 @@ class BaseRenderer(Ch):
         # glBufferData(GL_VERTEX_ARRAY, 3 * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
         # glBindBuffer(GL_VERTEX_ARRAY, NULL);
 
-
         self.vbo_verts_face = vbo.VBO(self.verts_by_face.astype(np.float32))
 
         self.vbo_verts_dyn = vbo.VBO(np.array(self.v, dtype=np.float32))
@@ -1259,9 +1258,11 @@ class TexturedRenderer(ColoredRenderer):
         // Ouput data
         out vec3 color;
         void main(){
-            color = theColor * texture2D( myTextureSampler, UV).rgb;
+            color = theColor * texture2D(myTextureSampler, UV).rgb;
+            
         }""", GL.GL_FRAGMENT_SHADER)
 
+        # color = theColor * texture2D(myTextureSampler, UV).rgb;
         VERTEX_SHADER = shaders.compileShader("""#version 330 core
         // Input vertex data, different for all executions of this shader.
         layout (location = 0) in vec3 position;
@@ -1313,6 +1314,7 @@ class TexturedRenderer(ColoredRenderer):
             vaos_mesh = []
             vbo_indices_mesh = []
             textureIDs_mesh = []
+            
             for polygons in range(len(self.f_list[mesh])):
                 vao = GL.GLuint(0)
                 GL.glGenVertexArrays(1, vao)
@@ -1329,6 +1331,8 @@ class TexturedRenderer(ColoredRenderer):
                 GL.glVertexAttribPointer(color_location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
 
                 if self.haveUVs_list[mesh][polygons]:
+                    print (' self.haveUVs_list[mesh][polygons] ', self.haveUVs_list[mesh][polygons])
+                    
                     vbo_uvs.bind()
 
                     GL.glEnableVertexAttribArray(uvs_location) # from 'location = 0' in shader
@@ -1337,18 +1341,21 @@ class TexturedRenderer(ColoredRenderer):
                 #Textures:
                 texture = None
                 if self.haveUVs_list[mesh][polygons]:
+                    print (' self.haveUVs_list[mesh][polygons] ', self.haveUVs_list[mesh][polygons])
                     texture = GL.GLuint(0)
 
-                    GL.glGenTextures( 1, texture )
+                    texture = GL.glGenTextures(1)
+                    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
                     GL.glPixelStorei(GL.GL_UNPACK_ALIGNMENT,1)
                     GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
                     GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR)
                     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_BASE_LEVEL, 0)
                     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_LEVEL, 0)
 
-                    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+                    
 
-                    image = np.array(np.flipud((self.textures_list[mesh][polygons])), order='C', dtype=np.float32)
+                    
+                    image = np.array(np.flipud( (self.textures_list[mesh][polygons]) ), order='C', dtype=np.float32)
                     GL.glTexStorage2D(GL.GL_TEXTURE_2D, 1, GL.GL_RGB32F, image.shape[1], image.shape[0])
                     GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, image.shape[1], image.shape[0], GL.GL_RGB, GL.GL_FLOAT, image)
                     # GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, image.shape[1], image.shape[0], GL.GL_RGB, GL.GL_FLOAT, image.reshape([image.shape[1], image.shape[0], -1]).ravel().tostring())
@@ -1360,7 +1367,7 @@ class TexturedRenderer(ColoredRenderer):
             self.textureID_mesh_list = self.textureID_mesh_list + [textureIDs_mesh]
             self.vao_tex_mesh_list = self.vao_tex_mesh_list + [vaos_mesh]
             self.vbo_indices_mesh_list = self.vbo_indices_mesh_list + [vbo_indices_mesh]
-
+        
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
         GL.glBindVertexArray(0)
 
@@ -1511,6 +1518,7 @@ class TexturedRenderer(ColoredRenderer):
 
 
     def draw_texcoord_image(self, v, f, ft, boundarybool_image=None):
+        import ipdb; ipdb.set_trace()
 
         # gl = glf
         # gl.Disable(GL_TEXTURE_2D)
@@ -1690,6 +1698,7 @@ class TexturedRenderer(ColoredRenderer):
         return result
 
     def draw_color_image(self, with_vertex_colors=True, with_texture_on=True):
+        # import ipdb; ipdb.set_trace()
         self.makeCurrentContext()
         self._call_on_changed()
 
@@ -1729,6 +1738,7 @@ class TexturedRenderer(ColoredRenderer):
             else:
                 #Only texture.
                 colors = np.ones_like(vc).astype(np.float32)
+
 
             #Pol: Make a static zero vbo_color to make it more efficient?
             vbo_color.set_array(colors)
