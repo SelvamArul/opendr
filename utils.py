@@ -60,7 +60,9 @@ def createRenderer(glMode, cameraParams, v, vc, f_list, vn, uv, haveTextures_lis
     setupTexturedRenderer(renderer, vstack, vflat, f_list, vcflat, vnflat,  uv, haveTextures_list, textures_list, camera, frustum, win)
     return renderer
 
-def create_renderer_centauro(glMode,cameraParams, v, vc, f_list, vn, uv, haveTextures_list, textures_list, frustum, win, tf_world_2_camera ):
+
+def createRenderer(glMode, cameraParams, v, vc, f_list, vn, uv, haveTextures_list, textures_list, frustum, win ):
+    
     renderer = TexturedRenderer()
     renderer.set(glMode=glMode)
 
@@ -69,10 +71,8 @@ def create_renderer_centauro(glMode,cameraParams, v, vc, f_list, vn, uv, haveTex
     if len(vflat)==1:
         vstack = vflat[0]
     else:
-
         vstack = ch.vstack(vflat)
-
-    camera, modelRotation, _ = setupCamera_centauro(vstack, cameraParams, tf_world_2_camera)
+    camera, modelRotation, _ = setupCamera(vstack, cameraParams)
 
     vnflat = [item for sublist in vn for item in sublist]
     vcflat = [item for sublist in vc for item in sublist]
@@ -294,7 +294,6 @@ def setupCamera_centauro(v, cameraParams, tf_world_2_camera):
     return camera, modelRotation, chMVMat
 
 def setupCamera(v, cameraParams):
-
     chDistMat = geometry.Translate(x=0, y=cameraParams['Zshift'], z=cameraParams['chCamHeight'])
     #print ('chDistMat', chDistMat)
 
@@ -399,15 +398,16 @@ def setupTexturedRenderer(renderer, vstack, vch, f_list, vc_list, vnch, uv, have
     f = []
     f_listflat = [item for sublist in f_list for item in sublist]
     lenMeshes = 0
-
     for mesh_i, mesh in enumerate(f_listflat):
         polygonLen = 0
         for polygons in mesh:
+            
             f = f + [polygons + lenMeshes]
             polygonLen += len(polygons)
         lenMeshes += len(vch[mesh_i])
+    
     fstack = np.vstack(f)
-
+    
     if len(vnch)==1:
         vnstack = vnch[0]
     else:
@@ -420,13 +420,18 @@ def setupTexturedRenderer(renderer, vstack, vch, f_list, vc_list, vnch, uv, have
 
     uvflat = [item for sublist in uv for item in sublist]
     ftstack = np.vstack(uvflat)
-
+    
     texturesch = []
     textures_listflat = [item for sublist in textures_list for item in sublist]
+
+    # import ipdb; ipdb.set_trace()
+
     for texture_list in textures_listflat:
         if texture_list != None:
             for texture in texture_list:
-                if texture != None:
+                if isinstance(texture, np.ndarray):
+                    texturesch = texturesch + [ch.array(texture)]
+                elif texture != None:
                     texturesch = texturesch + [ch.array(texture)]
 
     if len(texturesch) == 0:
