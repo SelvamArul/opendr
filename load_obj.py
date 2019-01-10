@@ -52,7 +52,7 @@ class Obj:
         return Obj.fromstring(open(filename).read(), has_vertex_coloring=has_vertex_coloring)
 
     @staticmethod
-    def open_as_np_array(filename) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def open_as_np_array(filename, has_vertex_coloring=False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         '''
         Args:
                 filename (str): The filename.
@@ -102,8 +102,14 @@ class Obj:
         vert = []
         text = []
         norm = []
+        face_vtn = []
         face = []
         color = []
+        '''
+        face_vtn is [vertex texture normal]
+        face is [vertex1, vertex2, vertex3]
+        '''
+
 
         data = RE_COMMENT.sub('\n', data)
 
@@ -120,8 +126,9 @@ class Obj:
             if match:
                 _l = tuple(map(safe_float, match.groups()))
                 vert.append(_l[:3])
-                color.append(_l[3:])
-                continue
+                if has_vertex_coloring:
+                    color.append(_l[3:])
+                    continue
 
             match = RE_TEXT.match(line)
             if match:
@@ -138,31 +145,33 @@ class Obj:
 
             if match:
                 v, t, n = match.group(1, 3, 5)
-                face.append((int(v), int_or_none(t), int_or_none(n)))
+                face_vtn.append((int(v), int_or_none(t), int_or_none(n)))
                 v, t, n = match.group(6, 8, 10)
-                face.append((int(v), int_or_none(t), int_or_none(n)))
+                face_vtn.append((int(v), int_or_none(t), int_or_none(n)))
                 v, t, n = match.group(11, 13, 15)
-                face.append((int(v), int_or_none(t), int_or_none(n)))
+                face_vtn.append((int(v), int_or_none(t), int_or_none(n)))
+                v1, v2, v3 = match.group(1, 6, 11)
+                face.append( (int(v1), int(v2), int(v3)) )
                 continue
 
             log.debug('unknown line "%s"', line)
 
-        if not face:
+        if not face_vtn:
             raise Exception('empty')
 
-        t0, n0 = face[0][1:3]
+        t0, n0 = face_vtn[0][1:3]
 
-        for v, t, n in face:
+        for v, t, n in face_vtn:
             #if (t0 is None) ^ (t is None):
                 #raise Exception('inconsinstent texture coords')
 
             if (n0 is None) ^ (n is None):
                 raise Exception('inconsinstent normals')
-        print (' fromstring ', len(vert), len(text), len(norm), len(face), len(color))
+        print (' fromstring ', len(vert), len(text), len(norm), len(face_vtn), len(face), len(color) )
         if return_np_array:
-            return np.asarray(vert), np.asarray(text), np.asarray(norm), np.asarray(face), np.asarray(color)
+            return np.asarray(vert), np.asarray(text), np.asarray(norm), np.asarray(face_vtn), np.asarray(face), np.asarray(color)
         else:
-            return Obj(vert, text, norm, face, color)
+            return Obj(vert, text, norm, face_vtn, color)
 
     def __init__(self, vert, text, norm, face, color):
         self.vert = vert
