@@ -114,7 +114,9 @@ v_transf, textUVs, vn_transf, faces_obj, faces, VColors = load_mesh('data/002_ma
 # .obj is 1 based indexing.
 faces = faces - 1
 
-_t = np.asarray( Image.open('/home/arul/workspace/opendr/data/002_master_chef_can/texture_map.png') )
+_t = np.asarray( Image.open('/home/arul/workspace/opendr/data/002_master_chef_can/texture_map.png') ).astype(np.float32)
+_t = _t / 255
+import ipdb; ipdb.set_trace()
 textUVs = textUVs[:,0:2]
 haveTexturesObj = [[True]]
 texturesListObj=[[_t]]
