@@ -47,7 +47,8 @@ else:
 winShared = None
 
 gtCamElevation = np.pi/3
-gtCamHeight = 0.3 #meters
+gtCamElevation = 0
+gtCamHeight = 0. #meters
 
 chLightAzimuthGT = ch.Ch([0])
 chLightElevationGT = ch.Ch([np.pi/3])
@@ -110,17 +111,27 @@ def load_mesh(filename, has_vertex_coloring=False):
 #vert, textUVs, norm, face, color = load_mesh('data/002_master_chef_can/textured.obj')
 v_transf, textUVs, vn_transf, faces_obj, faces, VColors = load_mesh('data/002_master_chef_can/textured.obj')
 
-#FIXME Is this the premanent solution?
+
+#FIXME Is this the permanent solution?
 # .obj is 1 based indexing.
 faces = faces - 1
+faces_obj = faces_obj - 1
 
 _t = np.asarray( Image.open('/home/arul/workspace/opendr/data/002_master_chef_can/texture_map.png') ).astype(np.float32)
 _t = _t / 255
-import ipdb; ipdb.set_trace()
+
+
+#remapping vertices and textures 
+# https://stackoverflow.com/questions/27777349/handling-obj-files-why-is-it-possible-to-have-more-vertextextures-vt-than-ve
+
+v_transf =  v_transf[faces_obj[:,0]]
+textUVs = textUVs[faces_obj[:,1]]
+faces = np.arange( len(v_transf) )
+faces = faces.reshape(-1, 3)
+
 textUVs = textUVs[:,0:2]
 haveTexturesObj = [[True]]
 texturesListObj=[[_t]]
-
 
 # vc_illuminated = computeGlobalAndDirectionalLighting(vn_transf, VColors, chLightAzimuthGT, chLightElevationGT, chLightIntensityGT, chGlobalConstantGT)
 
@@ -160,7 +171,7 @@ renderer.debug = False
 winShared = renderer.win
 
 plt.figure()
-plt.title('GT object')
+plt.title('Visualization')
 plt.imshow(renderer.r)
 
 rendererGT = ch.Ch(renderer.r.copy()) #Fix the GT position
