@@ -1,5 +1,11 @@
 """
 Adapted from https://github.com/cprogrammer1994/ModernGL.ext.obj
+
+Modified to be in compatible with OpenDR
+OpenDR assumes 1-to-1 mapping between vertex and texture coordinates.
+To be compatible with this assumption, use only open_as_np_array
+
+This code is suitable for obj files with textures.
 """
 
 import logging
@@ -103,13 +109,7 @@ class Obj:
         text = []
         norm = []
         face_vtn = []
-        face = []
         color = []
-        '''
-        face_vtn is [vertex texture normal]
-        face is [vertex1, vertex2, vertex3]
-        '''
-
 
         data = RE_COMMENT.sub('\n', data)
 
@@ -151,7 +151,6 @@ class Obj:
                 v, t, n = match.group(11, 13, 15)
                 face_vtn.append((int(v), int_or_none(t), int_or_none(n)))
                 v1, v2, v3 = match.group(1, 6, 11)
-                face.append( (int(v1), int(v2), int(v3)) )
                 continue
 
             log.debug('unknown line "%s"', line)
@@ -167,9 +166,28 @@ class Obj:
 
             if (n0 is None) ^ (n is None):
                 raise Exception('inconsinstent normals')
-        print (' fromstring ', len(vert), len(text), len(norm), len(face_vtn), len(face), len(color) )
+        print (' fromstring ', len(vert), len(text), len(norm), len(face_vtn), len(color) )
         if return_np_array:
-            return np.asarray(vert), np.asarray(text), np.asarray(norm), np.asarray(face_vtn), np.asarray(face), np.asarray(color)
+            vert = np.asarray(vert)
+            text = np.asarray(text)
+            norm = np.asarray(text)
+            color = np.asarray(color)
+            
+            face_vtn = np.asarray(face_vtn)
+
+            # .obj is 1 based indexing.
+            face_vtn = face_vtn - 1
+            
+            #remapping vertices, textures, and normals 
+            # https://stackoverflow.com/questions/27777349/handling-obj-files-why-is-it-possible-to-have-more-vertextextures-vt-than-ve
+            vert =  vert[face_vtn[:,0]]
+            text =  text[face_vtn[:,1]]
+            norm =  norm[face_vtn[:,2]]
+
+            faces = np.arange( len(vert) )
+            faces = faces.reshape(-1, 3)
+
+            return vert, text, norm, faces, color
         else:
             return Obj(vert, text, norm, face_vtn, color)
 
