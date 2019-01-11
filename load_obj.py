@@ -170,7 +170,7 @@ class Obj:
         if return_np_array:
             vert = np.asarray(vert)
             text = np.asarray(text)
-            norm = np.asarray(text)
+            norm = np.asarray(norm)
             color = np.asarray(color)
             
             face_vtn = np.asarray(face_vtn)
