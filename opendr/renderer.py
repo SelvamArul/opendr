@@ -521,11 +521,7 @@ class BaseRenderer(Ch):
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))), np.float32))
 
         _t = np.dot(self.projectionMatrix, view_mtx)
-        #print ('***************1***************')
-        #print ('******************************')
-        #print ('MVP matrix', _t)
-        #print ('******************************')
-        #print ('******************************')
+
         GL.glUniformMatrix4fv(self.MVP_location, 1, GL.GL_TRUE, _t)
 
         GL.glDrawElements(GL.GL_TRIANGLES, len(self.vbo_indices)*3, GL.GL_UNSIGNED_INT, None)
@@ -739,11 +735,7 @@ class BaseRenderer(Ch):
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))),np.float32))
         
         _t = np.dot(self.projectionMatrix, view_mtx)
-        #print ('***************2***************')
-        #print ('******************************')
-        #print ('MVP matrix', _t)
-        #print ('******************************')
-        #print ('******************************')
+
         
         
         GL.glUniformMatrix4fv(self.MVP_location, 1, GL.GL_TRUE, _t)
@@ -1197,16 +1189,6 @@ class TexturedRenderer(ColoredRenderer):
     terms = 'f', 'frustum', 'vt', 'ft', 'background_image', 'ft_list', 'haveUVs_list', 'textures_list', 'vc_list'
     dterms = 'vc', 'camera', 'bgcolor', 'texture_stack', 'v'
 
-    # def __init__(self):
-        # try:
-        #     self.overdraw
-        # except:
-        #     self.overdraw = True
-        #
-        # try:
-        #     self.nsamples
-        # except:
-        #     self.nsamples = 8
 
     def clear(self):
         try:
@@ -1351,11 +1333,13 @@ class TexturedRenderer(ColoredRenderer):
                     GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR_MIPMAP_LINEAR)
                     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_BASE_LEVEL, 0)
                     GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_LEVEL, 0)
-
+                    
                     
 
                     
                     image = np.array(np.flipud( (self.textures_list[mesh][polygons]) ), order='C', dtype=np.float32)
+                    #image = np.ones_like(image)
+                    #import ipdb; ipdb.set_trace()
                     GL.glTexStorage2D(GL.GL_TEXTURE_2D, 1, GL.GL_RGB32F, image.shape[1], image.shape[0])
                     GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, image.shape[1], image.shape[0], GL.GL_RGB, GL.GL_FLOAT, image)
                     # GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, image.shape[1], image.shape[0], GL.GL_RGB, GL.GL_FLOAT, image.reshape([image.shape[1], image.shape[0], -1]).ravel().tostring())
@@ -1492,11 +1476,6 @@ class TexturedRenderer(ColoredRenderer):
         MVP = np.dot(self.projectionMatrix, view_mtx)
 
         _t = np.dot(self.projectionMatrix, view_mtx)
-        #print ('**************3****************')
-        #print ('******************************')
-        #print ('MVP matrix', _t)
-        #print ('******************************')
-        #print ('******************************')
 
         for polygons in np.arange(len(self.f_list[mesh])):
 
@@ -1647,14 +1626,15 @@ class TexturedRenderer(ColoredRenderer):
                             texture = self.textureID_mesh_list[mesh][polygons]
 
                             GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+                            #import ipdb; ipdb.set_trace()
 
                             #Update the OpenGL textures with all the textures. (Inefficient as many might not have changed).
-                            image = np.array(np.flipud((self.textures_list[mesh][polygons] * 255.0)), order='C', dtype=np.uint8)
-
+                            image = np.array((np.flipud(self.textures_list[mesh][polygons] * 255.0)), order='C', dtype=np.uint8)
+                            
                             self.textures_list[mesh][polygons] = self.texture_stack[textureCoordIdx:image.size+textureCoordIdx].reshape(image.shape)
 
                             textureCoordIdx = textureCoordIdx + image.size
-                            image = np.array(np.flipud((self.textures_list[mesh][polygons] * 255.0)), order='C', dtype=np.uint8)
+                            #image = np.array(np.flipud((self.textures_list[mesh][polygons] * 255.0)), order='C', dtype=np.uint8)
 
                             GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, image.shape[1], image.shape[0], GL.GL_RGB, GL.GL_UNSIGNED_BYTE,
                                                image.reshape([image.shape[1], image.shape[0], -1]).ravel().tostring())
