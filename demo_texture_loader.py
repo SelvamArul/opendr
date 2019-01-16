@@ -46,27 +46,7 @@ else:
 
 winShared = None
 
-gtCamElevation = np.pi/3
-gtCamElevation = 0
-gtCamHeight = 0. #meters
-
-chLightAzimuthGT = ch.Ch([0])
-chLightElevationGT = ch.Ch([np.pi/3])
-chLightIntensityGT = ch.Ch([1])
-chGlobalConstantGT = ch.Ch([0.5])
-
-chCamElGT = ch.Ch([gtCamElevation])
-chCamHeightGT = ch.Ch([gtCamHeight])
-focalLenght = 35 ##milimeters
-chCamFocalLengthGT = ch.Ch([35/1000])
-
-#Move camera backwards to match the elevation desired as it looks at origin:
-# bottomElev = np.pi/2 - (gtCamElevation + np.arctan(17.5 / focalLenght ))
-# ZshiftGT =  ch.Ch(-gtCamHeight * np.tan(bottomElev)) #Move camera backwards to match the elevation desired as it looks at origin.
-
-ZshiftGT =  ch.Ch([-0.2])
-
-# Baackground cube - add to renderer by default.
+# Background cube - add to renderer by default.
 verticesCube, facesCube, normalsCube, vColorsCube, texturesListCube, haveTexturesCube = getCubeData()
 
 uvCube = np.zeros([verticesCube.shape[0],2])
@@ -107,12 +87,16 @@ def load_mesh(filename, has_vertex_coloring=False):
 
 #verticesCube, facesCube, normalsCube, vColorsCube, texturesListCube, haveTexturesCube = getCubeData()
 
-meshes  = ['data/002_master_chef_can/textured.obj', 'data/008_pudding_box/textured.obj']
-textures = ['data/002_master_chef_can/texture_map.png', 'data/008_pudding_box/texture_map.png']
+meshes  = ['data/008_pudding_box/textured.obj', 'data/002_master_chef_can/textured.obj', ]
+textures = ['data/008_pudding_box/texture_map.png' , 'data/002_master_chef_can/texture_map.png',]
 for _i, _m in enumerate(meshes):
 
     #vert, textUVs, norm, face, color = load_mesh('data/002_master_chef_can/textured.obj')
     v_transf, textUVs, vn_transf, faces, VColors = load_mesh(meshes[_i])
+
+    print ('Min max vertices ', np.min(v_transf), np.max(v_transf))
+    print ('shape', v_transf.shape, faces.shape)
+    
 
     texture_image = np.asarray( Image.open(textures[_i]) ).astype(np.float32)
     texture_image /= 255
@@ -133,6 +117,34 @@ for _i, _m in enumerate(meshes):
     haveTextures_list_scene += [haveTexturesObj]
     textures_list_scene += [texturesListObj]
 
+
+
+from libigl_interface import visualize_scene
+import copy
+visualize_scene( copy.deepcopy(v_scene), copy.deepcopy(f_list_scene))
+
+
+# camera parameters
+
+#Move camera backwards to match the elevation desired as it looks at origin:
+# bottomElev = np.pi/2 - (gtCamElevation + np.arctan(17.5 / focalLenght ))
+# ZshiftGT =  ch.Ch(-gtCamHeight * np.tan(bottomElev)) #Move camera backwards to match the elevation desired as it looks at origin.
+
+ZshiftGT =  ch.Ch([-0.2])
+
+gtCamElevation = np.pi/3
+gtCamElevation = 0
+gtCamHeight = 0. #meters
+
+chLightAzimuthGT = ch.Ch([0])
+chLightElevationGT = ch.Ch([np.pi/3])
+chLightIntensityGT = ch.Ch([1])
+chGlobalConstantGT = ch.Ch([0.5])
+
+chCamElGT = ch.Ch([gtCamElevation])
+chCamHeightGT = ch.Ch([gtCamHeight])
+focalLenght = 35 ##milimeters
+chCamFocalLengthGT = ch.Ch([35/1000])
 
 #COnfigure lighting
 lightParamsGT = {'chLightAzimuth': chLightAzimuthGT, 'chLightElevation': chLightElevationGT, 'chLightIntensity': chLightIntensityGT, 'chGlobalConstant':chGlobalConstantGT}
