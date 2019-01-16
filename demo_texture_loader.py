@@ -4,7 +4,7 @@ __author__ = 'arul'
 
 import matplotlib.pyplot as plt
 import glfw
-import generative_models
+# import generative_models
 from utils import *
 import OpenGL.GL as GL
 from utils import *
@@ -107,28 +107,31 @@ def load_mesh(filename, has_vertex_coloring=False):
 
 #verticesCube, facesCube, normalsCube, vColorsCube, texturesListCube, haveTexturesCube = getCubeData()
 
+meshes  = ['data/002_master_chef_can/textured.obj', 'data/008_pudding_box/textured.obj']
+textures = ['data/002_master_chef_can/texture_map.png', 'data/008_pudding_box/texture_map.png']
+for _i, _m in enumerate(meshes):
 
-#vert, textUVs, norm, face, color = load_mesh('data/002_master_chef_can/textured.obj')
-v_transf, textUVs, vn_transf, faces, VColors = load_mesh('data/002_master_chef_can/textured.obj')
+    #vert, textUVs, norm, face, color = load_mesh('data/002_master_chef_can/textured.obj')
+    v_transf, textUVs, vn_transf, faces, VColors = load_mesh(meshes[_i])
 
-texture_image = np.asarray( Image.open('/home/arul/workspace/opendr/data/002_master_chef_can/texture_map.png') ).astype(np.float32)
-texture_image /= 255
+    texture_image = np.asarray( Image.open(textures[_i]) ).astype(np.float32)
+    texture_image /= 255
 
-textUVs = textUVs[:,0:2]
-haveTexturesObj = [[True]]
-texturesListObj=[[texture_image]]
+    textUVs = textUVs[:,0:2]
+    haveTexturesObj = [[True]]
+    texturesListObj=[[texture_image]]
 
-# vc_illuminated = computeGlobalAndDirectionalLighting(vn_transf, VColors, chLightAzimuthGT, chLightElevationGT, chLightIntensityGT, chGlobalConstantGT)
+    # vc_illuminated = computeGlobalAndDirectionalLighting(vn_transf, VColors, chLightAzimuthGT, chLightElevationGT, chLightIntensityGT, chGlobalConstantGT)
 
-vc_illuminated = ch.Ch(np.ones_like( v_transf ))
+    vc_illuminated = ch.Ch(np.ones_like( v_transf ))
 
-v_scene += [[v_transf]]
-f_list_scene += [[[faces]]]
-vc_scene += [[vc_illuminated]]
-vn_scene += [[vn_transf]]
-uv_scene += [[textUVs]]
-haveTextures_list_scene += [haveTexturesObj]
-textures_list_scene += [texturesListObj]
+    v_scene += [[v_transf]]
+    f_list_scene += [[[faces]]]
+    vc_scene += [[vc_illuminated]]
+    vn_scene += [[vn_transf]]
+    uv_scene += [[textUVs]]
+    haveTextures_list_scene += [haveTexturesObj]
+    textures_list_scene += [texturesListObj]
 
 
 #COnfigure lighting
