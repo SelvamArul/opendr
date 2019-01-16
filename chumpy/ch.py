@@ -1054,7 +1054,7 @@ __all__ += ['array', 'amax','amin', 'max', 'min', 'maximum','minimum','nanmax','
             'greater', 'greater_equal', 'less', 'less_equal', 'equal', 'not_equal',
             'nonzero', 'ascontiguousarray', 'asfarray', 'arange', 'asarray', 'copy',
             'cross',
-            'shape', 'tensordot', 'sign']
+            'shape', 'sign']
 
 
 __all__ += ['SumOfSquares',
