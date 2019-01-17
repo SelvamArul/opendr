@@ -154,7 +154,9 @@ c1 = height/2  #principal point
 a1 = 3.657  #Aspect ratio / mm to pixels
 a2 = 3.657  #Aspect ratio / mm to pixels
 
-cameraParamsGT = {'Zshift':ZshiftGT, 'chCamEl': chCamElGT, 'chCamHeight':chCamHeightGT, 'chCamFocalLength':chCamFocalLengthGT, 'a':np.array([a1,a2]), 'width': width, 'height':height, 'c':np.array([c0, c1])}
+cameraParamsGT = {'Zshift':ZshiftGT, 'chCamEl': chCamElGT, 'chCamHeight':chCamHeightGT, 
+                    'chCamFocalLength':chCamFocalLengthGT, 'a':np.array([a1,a2]), 
+                    'width': width, 'height':height, 'c':np.array([c0, c1])}
 
 #Create renderer object
 renderer = createRenderer(glMode, cameraParamsGT, v_scene, vc_scene, f_list_scene, vn_scene, uv_scene, haveTextures_list_scene,
