@@ -1760,7 +1760,7 @@ class TexturedRenderer(ColoredRenderer):
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.fbo)
         GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
 
-        result = np.flipud(np.frombuffer(GL.glReadPixels( 0,0, self.frustum['width'], self.frustum['height'], GL.GL_RGB, GL.GL_UNSIGNED_BYTE), np.uint8).reshape(self.frustum['height'],self.frustum['height'],3).astype(np.float64))/255.0
+        result = np.flipud(np.frombuffer(GL.glReadPixels( 0,0, self.frustum['width'], self.frustum['height'], GL.GL_RGB, GL.GL_UNSIGNED_BYTE), np.uint8).reshape(self.frustum['height'],self.frustum['width'],3).astype(np.float64))/255.0
 
         GL.glBindFramebuffer(GL.GL_DRAW_FRAMEBUFFER, self.fbo)
         GL.glDisable(GL.GL_MULTISAMPLE)
