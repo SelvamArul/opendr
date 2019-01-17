@@ -324,10 +324,26 @@ def setupCamera(v, cameraParams):
     chTranslation = chInvCam[0:3,3]
 
     translation, rotation = (chTranslation, chRod)
+    
+    # camera parameters format suitable for YCB video dataset
+    if 'a' in cameraParams.keys():
+        # NOTE: Focal lenght is represented in mm and a is no.of pixels per mm
+        _f = 1000 * cameraParams['chCamFocalLength']*cameraParams['a']
 
-    camera = ProjectPoints(v=v, rt=rotation, t=translation, f = 1000*cameraParams['chCamFocalLength']*cameraParams['a'], c=cameraParams['c'], k=ch.zeros(5))
-    _f = 1000 * cameraParams['chCamFocalLength'] * cameraParams['a']
-    _c = cameraParams['c']
+    else:
+        # NOTE: Focal length is already in terms of pixels
+        if np.any(cameraParams['chCamFocalLength'] < 1):
+            import sys
+            sys.exit("Camera Focal length 'chCamFocalLength' is represented in number of pixels.")
+        _f = cameraParams['chCamFocalLength']
+
+    if 'k' in cameraParams.keys():
+        _k = cameraParams['k']
+    else:
+        _k = ch.zeros(5)
+    camera = ProjectPoints(v=v, rt=rotation, t=translation, f =  _f, c = cameraParams['c'], k=_k)
+    # _f = 1000 * cameraParams['chCamFocalLength'] * cameraParams['a']
+    # _c = cameraParams['c']
 
     #np.save('intrinsics.npy', camera.camera_mtx, allow_pickle=False)
     ##print ('camera shape', camera.shape)
