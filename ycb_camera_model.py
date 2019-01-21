@@ -175,7 +175,9 @@ if __name__ == '__main__':
     plt.figure()
     plt.title('Visualization')
     plt.imshow(renderer.r)
+    plt.show()
 
     rendererGT = ch.Ch(renderer.r.copy()) #Fix the GT position
 
-    plt.show(0.1)
+    # plt.show(0.1)
+    _yes = input('Alles Gut!!!')
