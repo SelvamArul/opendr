@@ -1631,6 +1631,7 @@ class TexturedRenderer(ColoredRenderer):
                             #Update the OpenGL textures with all the textures. (Inefficient as many might not have changed).
                             image = np.array((np.flipud(self.textures_list[mesh][polygons] * 255.0)), order='C', dtype=np.uint8)
                             
+                            # import ipdb; ipdb.set_trace()
                             self.textures_list[mesh][polygons] = self.texture_stack[textureCoordIdx:image.size+textureCoordIdx].reshape(image.shape)
 
                             textureCoordIdx = textureCoordIdx + image.size

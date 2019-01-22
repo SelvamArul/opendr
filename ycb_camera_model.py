@@ -30,6 +30,12 @@ chCamHeightGT = ch.Ch([gtCamHeight])
 
 chCamFocalLengthGT = ch.Ch([1077.836, 1078.189])
 
+# https://docs.opencv.org/3.0-beta/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+# camera model used in YCB video dataset is 'Poly3'
+# k is modelled as [k1, k2, p1, p2, k3]
+ 
+k = ch.Ch([0.03279146, -0.08454684, 0, 0, 0])
+
 c0 = width/2  #principal point
 c1 = height/2  #principal point
 
@@ -40,7 +46,8 @@ cameraParamsGT = {'Zshift':ZshiftGT,
                     'chCamFocalLength':chCamFocalLengthGT, 
                     'width': width, 
                     'height':height, 
-                    'c':np.array([c0, c1])
+                    'c':np.array([c0, c1]),
+                    'k':k
                     }
 
 

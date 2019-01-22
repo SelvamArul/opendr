@@ -341,6 +341,7 @@ def setupCamera(v, cameraParams):
         _k = cameraParams['k']
     else:
         _k = ch.zeros(5)
+    print ('Using k', _k)
     camera = ProjectPoints(v=v, rt=rotation, t=translation, f =  _f, c = cameraParams['c'], k=_k)
     # _f = 1000 * cameraParams['chCamFocalLength'] * cameraParams['a']
     # _c = cameraParams['c']
