@@ -293,7 +293,11 @@ def setupCamera_centauro(v, cameraParams, tf_world_2_camera):
 
     return camera, modelRotation, chMVMat
 
-def setupCamera(v, cameraParams):
+# modifying for YCB model
+# YCB video dataset follows opencv convention
+# So no other transformations are needed.
+# Just use identity for chMVMat 
+def setupCamera(v, cameraParams, is_ycb = False):
     chDistMat = geometry.Translate(x=0, y=cameraParams['Zshift'], z=cameraParams['chCamHeight'])
     #print ('chDistMat', chDistMat)
 
@@ -307,14 +311,9 @@ def setupCamera(v, cameraParams):
                                 [0.0, 0.0, 0.0, 1.0]])
 
     chMVMat = ch.dot(chCamModelWorld, flipZYRotation)
-
-    #print ('------------------------------------------------')
-    #print ('chMVMat \n', chMVMat)
-    #print ('------------------------------------------------')
-    # save chMVMat as binary file
-    np.save('extrinsics.npy', chMVMat, allow_pickle=False)
-    #import ipdb
-    #ipdb.set_trace()
+    if is_ycb:
+        chMVMat = ch.Ch(np.eye(4))
+    # np.save('extrinsics.npy', chMVMat, allow_pickle=False)
 
     chInvCam = ch.inv(chMVMat)
 
