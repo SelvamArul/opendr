@@ -1313,7 +1313,7 @@ class TexturedRenderer(ColoredRenderer):
                 GL.glVertexAttribPointer(color_location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
 
                 if self.haveUVs_list[mesh][polygons]:
-                    print (' self.haveUVs_list[mesh][polygons] ', self.haveUVs_list[mesh][polygons])
+                    # print (' self.haveUVs_list[mesh][polygons] ', self.haveUVs_list[mesh][polygons])
                     
                     vbo_uvs.bind()
 
@@ -1323,7 +1323,7 @@ class TexturedRenderer(ColoredRenderer):
                 #Textures:
                 texture = None
                 if self.haveUVs_list[mesh][polygons]:
-                    print (' self.haveUVs_list[mesh][polygons] ', self.haveUVs_list[mesh][polygons])
+                    # print (' self.haveUVs_list[mesh][polygons] ', self.haveUVs_list[mesh][polygons])
                     texture = GL.GLuint(0)
 
                     texture = GL.glGenTextures(1)
