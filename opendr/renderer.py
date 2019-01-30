@@ -469,7 +469,11 @@ class BaseRenderer(Ch):
 
     @depends_on('f', 'v')
     def verts_by_face(self):
-        verts_by_face = self.v.reshape((-1,3))[self.f.ravel()]
+        # faces should be of type int
+        # faces will be used a indices to index vertices arary
+        # latest numpy versions does not allow indices to be of type float.
+        indices = np.array(self.f, dtype=np.uint32)
+        verts_by_face = self.v.reshape((-1,3))[indices.ravel()]
         return np.asarray(verts_by_face, dtype=np.float64, order='C')
 
     @depends_on('f', 'v')
@@ -1284,11 +1288,11 @@ class TexturedRenderer(ColoredRenderer):
         #ipdb.set_trace()
 
         for mesh in range(len(self.f_list)):
-
-            vbo_verts = vbo.VBO(np.array(self.v_list[mesh]).astype(np.float32))
+            
+            _v = np.array(self.v_list[mesh])
+            vbo_verts = vbo.VBO(_v.astype(np.float32))
             vbo_colors = vbo.VBO(np.array(self.vc_list[mesh]).astype(np.float32))
             vbo_uvs = vbo.VBO(np.array(self.ft_list[mesh]).astype(np.float32))
-
             self.vbo_colors_mesh = self.vbo_colors_mesh + [vbo_colors]
             self.vbo_verts_mesh = self.vbo_verts_mesh + [vbo_verts]
             self.vbo_uvs_mesh = self.vbo_uvs_mesh + [vbo_uvs]
@@ -1679,7 +1683,6 @@ class TexturedRenderer(ColoredRenderer):
         return result
 
     def draw_color_image(self, with_vertex_colors=True, with_texture_on=True):
-        # import ipdb; ipdb.set_trace()
         self.makeCurrentContext()
         self._call_on_changed()
 
