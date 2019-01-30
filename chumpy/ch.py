@@ -466,12 +466,19 @@ class Ch(object):
     ########################################################
     # Getters for our outputs
 
-    def __getitem__(self, key):        
-        shape = self.shape
-        tmp = np.arange(np.prod(shape)).reshape(shape).__getitem__(key)
-        idxs = tmp.ravel()
-        newshape = tmp.shape
-        return Select(a=self, idxs=idxs, preferred_shape=newshape)
+    def __getitem__(self, key):
+        try:
+            shape = self.shape
+            tmp = np.arange(np.prod(shape)).reshape(shape).__getitem__(key)
+            idxs = tmp.ravel()
+            newshape = tmp.shape
+            _return = Select(a=self, idxs=idxs, preferred_shape=newshape)
+        except Exception as e:
+            print ('Exception occured', e)
+            # import traceback
+            # print (traceback.print_exc())
+            import ipdb; ipdb.set_trace()
+        return _return
         
     def __setitem__(self, key, value, itr=None): 
 
@@ -548,7 +555,6 @@ class Ch(object):
         return sum(self, axis=axis)
 
     def _call_on_changed(self):
-
         if hasattr(self, 'is_valid'):
             validity, msg = self.is_valid()
             assert validity, msg
@@ -1984,6 +1990,7 @@ class Concatenate(Ch):
         return super(self.__class__, self).__getstate__()
     
     def compute_r(self):
+        # import ipdb; ipdb.set_trace()
         return np.concatenate([t.r for t in self.our_terms], axis=self.axis)
                     
     @property
@@ -2648,4 +2655,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
