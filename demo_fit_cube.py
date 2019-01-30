@@ -94,6 +94,11 @@ chScaleGT = ch.Ch([0.1, 0.1, 0.1])
 chColorGT = ch.Ch([1.0, 1.0, 1.0])
 chAzimuthGT = ch.Ch([0.1])
 
+chPositionGT.label = 'chPositionGT'
+chScaleGT.label = 'chScaleGT'
+chColorGT.label = 'chColorGT'
+chAzimuthGT.label = 'chAzimuthGT'
+
 objectParamsGT = {'chPosition':chPositionGT, 'chScale':chScaleGT, 'chColor':chColorGT, 'chAzimuth':chAzimuthGT}
 
 v_transf, vn_transf = transformObject([verticesCube], [normalsCube], chScaleGT, chAzimuthGT, chPositionGT)
@@ -125,7 +130,7 @@ a2 = 3.657  #Aspect ratio / mm to pixels
 
 cameraParamsGT = {'Zshift':ZshiftGT, 'chCamEl': chCamElGT, 'chCamHeight':chCamHeightGT, 'chCamFocalLength':chCamFocalLengthGT, 'a':np.array([a1,a2]), 'width': width, 'height':height, 'c':np.array([c0, c1])}
 
-import ipdb; ipdb.set_trace()
+# import ipdb; ipdb.set_trace()
 
 #Create renderer object
 renderer = createRenderer(glMode, cameraParamsGT, v_scene, vc_scene, f_list_scene, vn_scene, uv_scene, haveTextures_list_scene,
@@ -141,9 +146,14 @@ winShared = renderer.win
 
 plt.figure()
 plt.title('GT object')
-plt.imshow(renderer.r)
+print ('shape ', renderer.r.shape)
+from PIL import Image
+_gt_scene = Image.fromarray(np.uint8(renderer.r * 255 ))
+_gt_scene.show()
 
 rendererGT = ch.Ch(renderer.r.copy()) #Fix the GT position
+
+import ipdb; ipdb.set_trace()
 
 #Vary cube scale:
 chScaleGT[0] = 0.05
@@ -151,8 +161,14 @@ chScaleGT[1] = 0.05
 
 plt.figure()
 plt.title('Init object')
-renderer.r
+print ('shape ', renderer.r.shape)
 plt.imshow(renderer.r)
+_gt_scene = Image.fromarray(np.uint8(renderer.r * 255 ))
+_gt_scene.show()
+
+import sys
+sys.exit()
+
 
 variances = ch.Ch([0.1])**2
 negLikModel = -ch.sum(generative_models.LogGaussianModel(renderer=renderer, groundtruth=rendererGT, variances=variances, useMask=True)) / numPixels
