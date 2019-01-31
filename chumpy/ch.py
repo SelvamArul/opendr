@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#!/usr/bin/env python
 # encoding: utf-8
 """
 Author(s): Matthew Loper
@@ -109,11 +108,6 @@ class Ch(object):
         defs.update(kwargs)
         result.set(**defs)
         
-        #if hasattr(result, 'x'):
-            #for i in args:
-                #print ('args', i)
-            #print ('ch result', result.x)
-            #print (result.x.shape)
         return result
 
     @classmethod
@@ -265,12 +259,10 @@ class Ch(object):
     def _compute_dr_wrt_sliced(self, wrt):
         self._call_on_changed()
         
-        # if wrt is self:
-        #     return np.array([[1]])
+
 
         result = self.compute_dr_wrt(wrt)
         if result is not None:
-            #print ('_compute_dr_wrt_sliced returning', result)
             return result
 
         # What allows slicing.
@@ -617,8 +609,7 @@ class Ch(object):
         drs = []
 
         direct_dr = self._compute_dr_wrt_sliced(wrt)
-        #print ('lmult_wrt  lhs, wrt', lhs, wrt)
-        #print ('lmult_wrt  direct_dr, wrt', direct_dr)
+
 
         if direct_dr != None:
             drs.append(self._superdot(lhs, direct_dr))
@@ -632,10 +623,8 @@ class Ch(object):
                     import pdb; pdb.set_trace()
 
                 indirect_dr = p.lmult_wrt(self._superdot(lhs, self._compute_dr_wrt_sliced(p)), wrt)
-                #print ('lmult_wrt  indirect_dr', indirect_dr)
                 if indirect_dr is not None:
                     drs.append(indirect_dr)
-        #print ('lmult_wrt drs', drs)
         if len(drs)==0:
             result = None
 
@@ -644,7 +633,6 @@ class Ch(object):
 
         else:
             result = reduce(lambda x, y: x+y, drs)
-        #print ('.;.;.;.;.;.;.;.;.;.;.;.;.;.;')
         return result
         
 
@@ -694,16 +682,13 @@ class Ch(object):
         return self._superdot(dr, rhs)
 
     def dr_wrt(self, wrt, reverse_mode=False):
-        #print ('dr_wrt', wrt, type(self))
         self._call_on_changed()
-        # ipdb.set_trace()
         drs = []
 
         if wrt in self._cache['drs']:
             return self._cache['drs'][wrt]
 
         direct_dr = self._compute_dr_wrt_sliced(wrt)
-        #print ('direct_dr', direct_dr)
         if direct_dr is not None:
             drs.append(direct_dr)
 
@@ -719,42 +704,26 @@ class Ch(object):
                 if reverse_mode:
 
                     lhs = self._compute_dr_wrt_sliced(p)
-                    #print ('lhs', lhs)
-                    #print ('lhs --->', lhs.shape)
-                    #print ('p --->', p.shape )
+
                     if isinstance(lhs, LinearOperator):
                         dr2 = p.dr_wrt(wrt)
-                        #print ('dr2 --->', dr2.shape)
                         indirect_dr = lhs.matmat(dr2) if dr2 != None else None
                         
                     else:
-                        #print (type(lhs), lhs)
                         indirect_dr = p.lmult_wrt(lhs, wrt)
-                        #print (type(indirect_dr))
-                        #print ('indirect_dr --->', indirect_dr.shape)
-                        #if not indirect_dr is None:
-                         #   print (type(indirect_dr), indirect_dr.shape)
+
                 else: # forward mode
                     dr2 = p.dr_wrt(wrt)
                     if dr2 is not None:
-                        # ipdb.set_trace()
                         indirect_dr = self.compute_rop(p, rhs=dr2)
-                #print ('indirect_dr ', indirect_dr)
                 if indirect_dr is not None:
                     drs.append(indirect_dr)
-                #print ('indirect_dr', indirect_dr)
-        #print ('------------------------------------------')
-        #print ('------------------------------------------')
-        #print ('dr_wrt ch.py 732:')
-        #print ('wrt', type(wrt), wrt.shape)
-        #print (wrt)
-        #print ('drs', len(drs))
+       
         if len(drs)==0:
             result = None
 
         elif len(drs)==1:
             result = drs[0]
-            #print ('result drs ', result)
 
         else:
             if not np.any([isinstance(a, LinearOperator) for a in drs]):
@@ -1518,31 +1487,6 @@ class subtract(Ch):
         return _t
 
 
-#class ais_identity(Ch):
-    #dterms = 'x'
-
-    #def compute_r(self):
-        ##print ('in subtract', self.a.r, self.b.r)
-        #return self.x.r.ravel()
-
-    ## place holder for the gradient
-    ## This interface is to allow manually entering the gradient
-    #self._dx = 0
-    #self.is_gradient_set = False
-    #def set_gradient(self, _dx):
-        #self._dx = _dx
-        #self.is_gradient_set = True
-
-    #def compute_dr_wrt(self, wrt):
-        #if wrt is self.x:
-            ## reset the gradient set flag
-            #self.is_gradient_set = False
-            #if not self.is_gradient_set:
-                ## enter the actual gradient computation
-                #return np.ones(self.x.r.ravel().shape)
-            #else:
-                #return self._dx
-
 class ch_power (Ch):
     """Given vector \f$x\f$, computes \f$x^2\f$ and \f$\frac{dx^2}{x}\f$"""
     dterms = 'x', 'pow'
@@ -1800,95 +1744,6 @@ def reshape(a, newshape):
     while isinstance(a, Reshape):
         a = a.a
     return Reshape(a=a, newshape=newshape)
-
-# class And(Ch):
-#     dterms = 'x1', 'x2'
-#
-#     def compute_r(self):
-#         if True:
-#             needs_work = [self.x1, self.x2]
-#             done = []
-#             while len(needs_work) > 0:
-#                 todo = needs_work.pop()
-#                 if isinstance(todo, And):
-#                     needs_work += [todo.x1, todo.x2]
-#                 else:
-#                     done = [todo] + done
-#             return np.concatenate([d.r.ravel() for d in done])
-#         else:
-#             return np.concatenate((self.x1.r.ravel(), self.x2.r.ravel()))
-#
-#     # This is only here for reverse mode to work.
-#     # Most of the time, the overridden dr_wrt is callpath gets used.
-#     def compute_dr_wrt(self, wrt):
-#
-#         if wrt is not self.x1 and wrt is not self.x2:
-#             return
-#
-#         input_len = wrt.r.size
-#         x1_len = self.x1.r.size
-#         x2_len = self.x2.r.size
-#
-#         mtxs = []
-#         if wrt is self.x1:
-#             mtxs.append(sp.spdiags(np.ones(x1_len), 0, x1_len, x1_len))
-#         else:
-#             mtxs.append(sp.csc_matrix((x1_len, input_len)))
-#
-#         if wrt is self.x2:
-#             mtxs.append(sp.spdiags(np.ones(x2_len), 0, x2_len, x2_len))
-#         else:
-#             mtxs.append(sp.csc_matrix((x2_len, input_len)))
-#
-#
-#         if any([sp.issparse(mtx) for mtx in mtxs]):
-#             result = sp.vstack(mtxs, format='csc')
-#         else:
-#             result = np.vstack(mtxs)
-#
-#         return result
-#
-#     def dr_wrt(self, wrt, want_stacks=False, reverse_mode=False):
-#         self._call_on_changed()
-#
-#         input_len = wrt.r.size
-#         x1_len = self.x1.r.size
-#         x2_len = self.x2.r.size
-#
-#         mtxs = []
-#         if wrt is self.x1:
-#             mtxs.append(sp.spdiags(np.ones(x1_len), 0, x1_len, x1_len))
-#         else:
-#             if isinstance(self.x1, And):
-#                 tmp_mtxs = self.x1.dr_wrt(wrt, want_stacks=True, reverse_mode=reverse_mode)
-#                 for mtx in tmp_mtxs:
-#                     mtxs.append(mtx)
-#             else:
-#                 mtxs.append(self.x1.dr_wrt(wrt, reverse_mode=reverse_mode))
-#             if mtxs[-1] is None:
-#                 mtxs[-1] = sp.csc_matrix((x1_len, input_len))
-#
-#         if wrt is self.x2:
-#             mtxs.append(sp.spdiags(np.ones(x2_len), 0, x2_len, x2_len))
-#         else:
-#             if isinstance(self.x2, And):
-#                 tmp_mtxs = self.x2.dr_wrt(wrt, want_stacks=True, reverse_mode=reverse_mode)
-#                 for mtx in tmp_mtxs:
-#                     mtxs.append(mtx)
-#             else:
-#                 mtxs.append(self.x2.dr_wrt(wrt, reverse_mode=reverse_mode))
-#             if mtxs[-1] is None:
-#                 mtxs[-1] = sp.csc_matrix((x2_len, input_len))
-#
-#         if want_stacks:
-#             return mtxs
-#         else:
-#             if any([sp.issparse(mtx) for mtx in mtxs]):
-#                 result = sp.vstack(mtxs, format='csc')
-#             else:
-#                 result = np.vstack(mtxs)
-#
-#         return result
         
 class Select(Permute):
     terms = ['idxs', 'preferred_shape']
