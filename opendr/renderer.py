@@ -978,7 +978,10 @@ class BaseRenderer(Ch):
         GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
 
         # return np.array(im.transpose(Image.FLIP_TOP_BOTTOM), np.float64)/255.0
-        return np.flipud(np.frombuffer(GL.glReadPixels( 0,0, self.frustum['width'], self.frustum['height'], GL.GL_RGB, GL.GL_UNSIGNED_BYTE), np.uint8).reshape(self.frustum['height'],self.frustum['height'],3).astype(np.float64))/255.0
+        img =  np.flipud(np.frombuffer(GL.glReadPixels( 0,0, self.frustum['width'], self.frustum['height'], GL.GL_RGB, GL.GL_UNSIGNED_BYTE), np.uint8).reshape( \
+            self.frustum['height'],self.frustum['width'],3).astype(np.float64))/255.0
+        
+        return img
 
     def setup_camera(self, camera):
 
