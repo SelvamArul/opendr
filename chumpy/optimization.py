@@ -507,11 +507,16 @@ class ChInputsStacked(ch.Ch):
         #print ('obj --->', type(self.obj))
         #print (wrt)
         #_ = input ('dr_wrt ')
+        
         if wrt is self.x:
             mtxs = []
             for freevar in self.free_variables:
                 if isinstance(freevar, ch.Select):
+                    
                     new_mtx = self.obj.dr_wrt(freevar.a)
+                    if new_mtx is None:
+                        import ipdb; ipdb.set_trace()
+                        new_mtx = self.obj.dr_wrt(freevar.a)
                     try:
                         mtxs.append(new_mtx[:,freevar.idxs])
                     except:
