@@ -566,7 +566,8 @@ def dImage_wrt_2dVerts_bnd(observed, visible, visibility, barycentric, image_wid
     # data = np.concatenate([data, ldata.ravel(), rdata.ravel(), tdata.ravel(), bdata.ravel()])
     #
 
-    result = sp.csc_matrix((data, ij), shape=(image_width*image_height*n_channels, num_verts*2))
+    # import ipdb; ipdb.set_trace()
+    result = sp.csc_matrix((data, ij), shape=( image_width*image_height*n_channels, int(num_verts*2) ))
 
     # hJS_idx = np.where(np.arange(num_verts*2) % 2)
     # vJS_idx = np.where((np.arange(num_verts*2)+ 1) % 2)
