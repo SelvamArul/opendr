@@ -486,7 +486,9 @@ class BaseRenderer(Ch):
         from opendr.geometry import TriNormals
         # return TriNormals(self.v, self.f).r.reshape((-1,3))
 
-        tn = np.mean(self.vn.r[self.f.ravel()].reshape([-1, 3, 3]), 1)
+        # numpy deprecated float type for indices
+        # https://github.com/numpy/numpy/blob/master/doc/release/1.12.0-notes.rst#deprecationwarning-to-error 
+        tn = np.mean(self.vn.r[self.f.ravel().astype(np.int32)].reshape([-1, 3, 3]), 1)
         return tn
 
     @property
@@ -776,7 +778,12 @@ class BaseRenderer(Ch):
         #ray = cv2.Rodrigues(camera.rt.r)[0].T[:,2]
         campos = -cv2.Rodrigues(camera.rt.r)[0].T.dot(camera.t.r)
         rays_to_verts = v.reshape((-1,3)) - row(campos)
-        rays_to_faces = rays_to_verts.take(f[:,0],axis=0) +rays_to_verts.take(f[:,1],axis=0) +rays_to_verts.take(f[:,2],axis=0)
+
+        # numpy deprecated float type for indices
+        # https://github.com/numpy/numpy/blob/master/doc/release/1.12.0-notes.rst#deprecationwarning-to-error 
+        rays_to_faces = rays_to_verts.take(f[:,0].astype(np.int32), axis=0) + \
+                        rays_to_verts.take(f[:,1].astype(np.int32), axis=0) + \
+                        rays_to_verts.take(f[:,2].astype(np.int32), axis=0)
         # rays_to_faces = np.sum(rays_to_verts.take(f[:,:],axis=0), axis=1)
 
         faces_invisible = np.sum(rays_to_faces * self.tn, axis=1)
