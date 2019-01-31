@@ -670,7 +670,9 @@ class BaseRenderer(Ch):
     def draw_colored_primitives(self, vao, v, f, fc=None):
         GL.glUseProgram(self.colorProgram)
     
-        verts_by_face = np.asarray(v.reshape((-1,3))[f.ravel()], dtype=np.float64, order='C')
+        # numpy deprecated float type for indices
+        # https://github.com/numpy/numpy/blob/master/doc/release/1.12.0-notes.rst#deprecationwarning-to-error 
+        verts_by_face = np.asarray(v.reshape((-1,3))[f.ravel().astype(np.int32)], dtype=np.float64, order='C')
     
         GL.glBindVertexArray(vao)
 
