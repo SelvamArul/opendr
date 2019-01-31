@@ -626,8 +626,6 @@ class BaseRenderer(Ch):
         self.draw_colored_verts(np.zeros_like(self.vc.r))
         GL.glDisable(GL.GL_POLYGON_OFFSET_FILL)
 
-        # GL.glClear(GL.GL_COLOR_BUFFER_BIT)
-
         ec = np.arange(1, len(e)+1)
         ec = np.tile(ec.reshape((-1,1)), (1, 3))
         ec[:, 0] = ec[:, 0] & 255
@@ -635,13 +633,6 @@ class BaseRenderer(Ch):
         ec[:, 2] = (ec[:, 2] >> 16 ) & 255
         ec = np.asarray(ec, dtype=np.uint8)
         ec = np.ones_like(ec, dtype=np.uint8)*255
-
-        # GL.glDepthFunc(GL.GL_GREATER)
-
-        # GL.glEnable(GL.GL_POLYGON_OFFSET_LINE)
-        # GL.glPolygonOffset(-10000.0, -10000.0)
-        # GL.glDepthMask(GL.GL_FALSE)
-        # self.projectionMatrix[2, 2] += 0.0000001
 
         GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glEnable(GL.GL_MULTISAMPLE)
@@ -658,22 +649,6 @@ class BaseRenderer(Ch):
         GL.glDisable(GL.GL_LINE_SMOOTH)
         GL.glDisable(GL.GL_BLEND)
         GL.glDepthFunc(GL.GL_LESS)
-
-        # self.projectionMatrix[2, 2] -= 0.0000001
-        # GL.glDisable(GL.GL_POLYGON_OFFSET_LINE)
-        # GL.glDepthMask(GL.GL_TRUE)
-
-        # if hidden_wireframe:
-        #     GL.glEnable(GL.GL_DEPTH_TEST)
-        #     GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
-        #     #Pol change it to a smaller number to avoid double edges in my teapot.
-        #     GL.glPolygonOffset(1.0, 1.0)
-        #     GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
-        #     # self.draw_colored_primitives(self.vao_dyn_ub, v, f, fc=np.zeros(f.shape).astype(np.uint8))
-        #     self.draw_colored_verts(np.zeros_like(self.vc.r))
-        #     # self.draw_colored_primitives(self.vaoub, v, e, np.zeros_like(ec).astype(np.uint8))
-        #     # self.projectionMatrix[2,2] -= delta
-        #     GL.glDisable(GL.GL_POLYGON_OFFSET_FILL)
 
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, self.fbo)
         GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
@@ -693,10 +668,9 @@ class BaseRenderer(Ch):
     # this assumes that fc is either "by faces" or "verts by face", not "by verts"
     def draw_colored_primitives(self, vao, v, f, fc=None):
         GL.glUseProgram(self.colorProgram)
-
-        # gl.EnableClientState(GL_VERTEX_ARRAY)
+    
         verts_by_face = np.asarray(v.reshape((-1,3))[f.ravel()], dtype=np.float64, order='C')
-        # gl.VertexPointer(verts_by_face)
+    
         GL.glBindVertexArray(vao)
 
         self.vbo_verts_dyn.set_array(verts_by_face.astype(np.float32))
