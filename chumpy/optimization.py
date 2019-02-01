@@ -170,8 +170,6 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     tm = time.time()
     pif('computing Jacobian...')
     J = obj.J
-    #print ('J shape', J.shape)
-    #print (J)
     if sp.issparse(J):
         assert(J.nnz > 0)
     print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
@@ -189,7 +187,6 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     bestParams = p
     bestEval = obj.r
     numWorse = 0
-    #_yes = input ('press <enter> to continue')
     while (not stop) and (k < k_max):
         k += 1
 
