@@ -58,62 +58,6 @@ def chFuncProb(fun, grad, var_f, var_df, args):
     return funValues
 
 
-
-# def probLineSearchMin(x0, fun, grad, args, df_vars, on_step=None, maxnumfuneval=None, verbose=0):
-
-#     def call_cb():
-#         if on_step is not None:
-#             on_step(fun)
-
-#     f = fun(x0, *args)
-#     df = grad(x0, *args)
-
-#     var_f = 0.001*np.ones(f.shape)
-#     var_df = df_vars
-
-#     ff = chFuncProb(fun, grad, var_f, var_df, args)
-
-#     # f,df, var_f, var_df = ff(x0)
-#     paras = []
-#     search_direction = - df   # search direction (not normalized)
-#     xt               = x0     # current position
-#     alpha0           = 0.01   # initial step size
-
-#     outs = {}
-#     outs['counter'] = 1 # counts # function evaluations
-
-#     path            = [x0]
-#     function_values = [f]
-#     oldf = np.inf
-#     while outs['counter'] < maxnumfuneval and np.abs(oldf - f) > 10e-5:
-#         oldf = f
-#         [outs, alpha0, f, df, xt, var_f, var_df] = pls.probLineSearch(ff, xt, f, df, search_direction, alpha0, 0, outs, paras, var_f, var_df)
-#         # alpha0           = 0.05
-#         search_direction   = - df     # new search direction
-
-#         if np.sqrt(np.sum(search_direction**2)) < 10e-4:
-#             print("Stopping: Approximate Gradient is almost 0")
-#             break
-#         # print("x " + str(xt))
-#         # print("Shape x " + str(xt.shape))
-#         # print("df " + str(df))
-#         print("Value of function:" + str(f))
-#         # print("Shape dfx " + str(df.shape))
-#         # print("New alpha " + str(alpha0))
-
-#         path            = path + [xt]
-#         function_values = function_values + [f]
-
-#         call_cb()
-
-#         print("COUNTER :::::: " + str(outs['counter']))
-
-#     fun(xt, *args)
-
-#     return xt
-
-
-
 def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None):
 
     verbose = False
@@ -196,17 +140,13 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
             arrJ = J.toarray()
             
         dp = col(lr*np.array(arrJ)) + momentum*dp
-        # import ipdb
-        # ipdb.set_trace()
         if p.shape != dp.shape:
             import ipdb
             ipdb.set_trace()
         p_new = p - dp
-        #print ('Gradient', obj.J.shape)
-        # print (obj.J)
+
         lr = lr*decay
         
-
         obj.x = p_new.ravel()
 
         if norm(dp) < tol:
@@ -470,10 +410,7 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, ca
         x1, fX, i = min_ras.minimize(np.concatenate([free_variable.r.ravel() for free_variable in free_variables]), residuals, scalar_jacfunc, args=(obj, obj_scalar, free_variables), on_step=callback, maxnumfuneval=maxiter)
     elif method == 'SGDMom':
         return minimize_sgdmom(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'], on_step=callback, maxiters=maxiter)
-    # elif method == 'probLineSearch':
-        # x1 = probLineSearchMin(np.concatenate([free_variable.r.ravel() for free_variable in free_variables]), residuals, scalar_jacfunc, args=(obj, obj_scalar, free_variables), df_vars=options['df_vars'], on_step=callback, maxnumfuneval=maxiter)
     else:
-        # ipdb.set_trace()
         print ('Invoking Scipy optimize')
         x1 = scipy.optimize.minimize(
             method=method,
@@ -496,14 +433,7 @@ class ChInputsStacked(ch.Ch):
     def compute_r(self):
         return self.obj.r.ravel()
     
-    # def compute_dr_wrt(self, wrt):
-    #     if wrt is self.x:
-    #         return hstack([self.obj.dr_wrt(freevar) for freevar in self.free_variables])
-    
     def dr_wrt(self, wrt):
-        #print ('obj --->', type(self.obj))
-        #print (wrt)
-        #_ = input ('dr_wrt ')
         
         if wrt is self.x:
             mtxs = []
@@ -521,7 +451,6 @@ class ChInputsStacked(ch.Ch):
                 else:
                     mtxs.append(self.obj.dr_wrt(freevar, reverse_mode=False))
             _t = hstack(mtxs)
-            #print ('_t', _t.shape)
             return _t
             #return hstack([self.obj.dr_wrt(freevar) for freevar in self.free_variables])
     
@@ -560,10 +489,6 @@ class ChInputsStacked(ch.Ch):
 
     @property
     def J(self):
-        #print ('J() : computing Jacobian')
-        #print ('self.x', self.x.shape)
-        #print (self.x)
-        #print ('------------------------------')
         result = self.dr_wrt(self.x).copy()
         return np.atleast_2d(result) if not sp.issparse(result) else result
     
