@@ -537,8 +537,16 @@ class ChInputsStacked(ch.Ch):
             for idx, freevar in enumerate(self.free_variables):
                 sz = freevar.r.size
                 rng = np.arange(pos, pos+sz)
-                
                 if isinstance(self.free_variables[idx], ch.Select):
+
+                    if not hasattr(self.free_variables[idx].a, 'x'):
+                        print ('self.free_variables[idx].a does not have attribute "x"' )
+                        print ('This happens because self.free_variables[idx].a is expected to be of type "ch.Ch" ')
+                        print (' but got type ', type(self.free_variables[idx].a))
+                        print ('One common mistake is to have superfluous dimenions')
+                        print ('chumpy allows flexible number of dimensions')
+                        print ('x[r][c][0][0] works for an array of just two dimensions')
+                        
                     newv = self.free_variables[idx].a.x.copy()
                     newv.ravel()[self.free_variables[idx].idxs] = self.x.r[rng]
                     self.free_variables[idx].a.__setattr__('x', newv, _giter)
