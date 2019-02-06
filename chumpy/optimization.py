@@ -24,6 +24,11 @@ import scipy.optimize
 from scipy.sparse.linalg.interface import LinearOperator
 import collections
 import chumpy.minimize_ras as min_ras
+
+from torchnet.logger import VisdomLogger, VisdomPlotLogger 
+import visdom
+
+
 # import probLineSearch as pls
 # import ipdb
 
@@ -58,7 +63,18 @@ def chFuncProb(fun, grad, var_f, var_df, args):
     return funValues
 
 
-def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None):
+def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None, gt=None):
+
+    env_name = 'test'
+    port = 8097
+    vis = visdom.Visdom(server='http://localhost', port=port, env=env_name)
+    vis.close(env=env_name)
+
+    obj_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='obj'))
+    p_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='p'))
+    dp_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp'))
+    lr_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='lr'))
+    j_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='jacobian'))
 
     verbose = False
     labels = {}
@@ -73,16 +89,12 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
     if num_unique_ids != len(free_variables):
        raise Exception('The "free_variables" param contains duplicate variables.')
-    # print ('***********************')
-    # print ('Before creating ChInputsStacked')
-    # print (type(obj))
-    # print (obj.x.shape)
-    # _tx = np.concatenate([freevar.r.ravel() for freevar in free_variables])
-    # print ('r.ravel', _tx.shape)
-    # print ('***********************')
+ 
     obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
-    
+    # obj.show_difference()
 
+    # import sys
+    # sys.exit()
     def call_cb():
         if on_step is not None:
             on_step(obj)
@@ -99,6 +111,8 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
         sys.stderr.write(report_line)
 
     call_cb()
+
+    import ipdb; ipdb.set_trace()
 
     # pif = print-if-verbose.
     # can't use "print" because it's a statement, not a fn
@@ -131,7 +145,9 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     bestParams = p
     bestEval = obj.r
     numWorse = 0
+    lrWorse = 0
     while (not stop) and (k < k_max):
+        print (f'{k}-------------------------------------')
         k += 1
 
         pif('beginning iteration %d' % (k,))
@@ -140,38 +156,233 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
             arrJ = J.toarray()
             
         dp = col(lr*np.array(arrJ)) + momentum*dp
+
+        print (f'dp {dp}             p {p}')
+        print ('lr ', lr)
+
         if p.shape != dp.shape:
             import ipdb
             ipdb.set_trace()
         p_new = p - dp
-
-        lr = lr*decay
+        if k > 25:
+            lr = lr*decay
         
         obj.x = p_new.ravel()
 
-        if norm(dp) < tol:
-            pif('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
-            stop = True
+        #if norm(dp) < tol:
+        #    print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
+        #    stop = True
 
         J = obj.J.copy()
-        if bestEval > obj.r:
+        _loss = obj.r
+        print (f'Best {bestEval}  loss {_loss}')
+        if bestEval > _loss:
             numWorse = 0
+            lrWorse = 0
             bestEval = obj.r.copy()
             bestParams = p.copy()
         else:
             numWorse += 1
-            if numWorse >= 10:
+            lrWorse += 1
+            if numWorse >= 100:
                 print("Stopping due to increasing evaluation error.")
                 stop = True
                 obj.x = bestParams.ravel()
                 obj.r
+            if lrWorse > 10:
+                lrWorse = 0
+                lr *= 0.9
 
         p = col(obj.x.r)
         call_cb()
 
+        # visualize optimization process
+        obj_logger.log(k, float(_loss), name='loss')
+        obj_logger.log(k, bestEval, name='best')
+        p_logger.log(k, float(p[0]),  name='p0')
+        p_logger.log(k, float(p[1]),  name='p1')
+        dp_logger.log(k, float(dp[0]),  name='dp0')
+        dp_logger.log(k, float(dp[1]),  name='dp1')
+        lr_logger.log(k, float(lr), name='lr')
+        # import ipdb; ipdb.set_trace()
+        j_logger.log(k, float(J[0][0]), name='J0')
+        j_logger.log(k, float(J[0][1]), name='J1')
+        if gt is not None:
+            p_logger.log(k, float(gt[0]),  name='gt_p0')
+            p_logger.log(k, float(gt[1]),  name='gt_p1')
+
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
     return obj.free_variables
+
+
+
+# 
+def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None, gt=None):
+    
+    eps = 1e-8
+    env_name = 'adagrad_test'
+    port = 8097
+    vis = visdom.Visdom(server='http://localhost', port=port, env=env_name)
+    vis.close(env=env_name)
+
+    obj_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='obj'))
+    p_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='p'))
+    dp_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp'))
+    lr_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='lr'))
+    j_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='jacobian'))
+
+    verbose = False
+    labels = {}
+    if isinstance(obj, list) or isinstance(obj, tuple):
+        obj = ch.concatenate([f.ravel() for f in obj])
+    elif isinstance(obj, dict):
+        labels = obj
+        obj = ch.concatenate([f.ravel() for f in list(obj.values())])
+
+    unique_ids = np.unique(np.array([id(freevar) for freevar in free_variables]))
+    num_unique_ids = len(unique_ids)
+
+    if num_unique_ids != len(free_variables):
+       raise Exception('The "free_variables" param contains duplicate variables.')
+ 
+    obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
+    # obj.show_difference()
+
+    # import sys
+    # sys.exit()
+    def call_cb():
+        if on_step is not None:
+            on_step(obj)
+
+        report_line = ""
+        if len(labels) > 0:
+            report_line += '%.2e | ' % (np.sum(obj.r**2),)
+        for label in sorted(labels.keys()):
+            objective = labels[label]
+            report_line += '%s: %.2e | ' % (label, np.sum(objective.r**2))
+        if len(labels) > 0:
+            report_line += '\n'
+        import sys
+        sys.stderr.write(report_line)
+
+    call_cb()
+
+    # pif = print-if-verbose.
+    # can't use "print" because it's a statement, not a fn
+    verbose = False
+    pif = lambda x: print(x) if verbose else 0
+
+    # optimization parms
+    k_max = maxiters
+
+    k = 0
+    p = col(obj.x.r)
+    
+    pif('computing Jacobian...')
+    J = obj.J
+    if sp.issparse(J):
+        assert(J.nnz > 0)
+    print ('p', p)
+    if J.shape[1] != p.size:
+        import pdb; pdb.set_trace()
+    assert(J.shape[1] == p.size)
+
+    stop = False
+    cache = ch.zeros_like( J )
+    M = ch.zeros_like( J )
+    R = ch.zeros_like( J )
+
+    bestParams = p
+    bestEval = obj.r
+    numWorse = 0
+    lrWorse = 0
+
+    gamma = 0.5
+    beta_1 = 0.9
+    beta_2 = 0.999
+
+    while (not stop) and (k < k_max):
+        print (f'{k}-------------------------------------')
+        k += 1
+        arrJ = J
+        if sp.issparse(J):
+            arrJ = J.toarray()
+
+        # Adagrad
+        cache += arrJ ** 2
+        
+        # RMSProp
+        # cache = gamma * cache +  (1- gamma) * (arrJ ** 2)
+        
+        # Adagrad , RMSProp
+        dp = col( lr * arrJ / ( ch.sqrt( cache ) + eps) )
+
+        # Adam
+        # import ipdb; ipdb.set_trace()
+        # M = beta_1 * M + (1-beta_1) * arrJ
+        # R = beta_2 * R + (1-beta_2) * arrJ ** 2
+        # M_hat = M / (1-beta_1 ** k)
+        # R_hat = R / (1-beta_2 ** k)
+        # dp = col( lr * M_hat / (ch.sqrt(R_hat) + eps ) )
+
+        print (f'dp {dp}             p {p}')
+        print ('lr ', lr)
+
+        p_new = p - dp
+        if k > 25:
+            lr = lr*decay
+        
+        obj.x = p_new.ravel()
+
+        #if norm(dp) < tol:
+        #    print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
+        #    stop = True
+
+        J = obj.J.copy()
+        _loss = obj.r
+        print (f'Best {bestEval}  loss {_loss}')
+        if bestEval > _loss:
+            numWorse = 0
+            lrWorse = 0
+            bestEval = obj.r.copy()
+            bestParams = p.copy()
+        else:
+            numWorse += 1
+            lrWorse += 1
+            if numWorse >= 25:
+                print("Stopping due to increasing evaluation error.")
+                stop = True
+                obj.x = bestParams.ravel()
+                obj.r
+            if lrWorse > 10:
+                lrWorse = 0
+                lr *= 0.9
+
+        p = col(obj.x.r)
+        call_cb()
+
+        # visualize optimization process
+        obj_logger.log(k, float(_loss), name='loss')
+        obj_logger.log(k, bestEval, name='best')
+        p_logger.log(k, float(p[0]),  name='p0')
+        p_logger.log(k, float(p[1]),  name='p1')
+        dp_logger.log(k, float(dp[0]),  name='dp0')
+        dp_logger.log(k, float(dp[1]),  name='dp1')
+        lr_logger.log(k, float(lr), name='lr')
+        # import ipdb; ipdb.set_trace()
+        j_logger.log(k, float(J[0][0]), name='J0')
+        j_logger.log(k, float(J[0][1]), name='J1')
+        if gt is not None:
+            p_logger.log(k, float(gt[0]),  name='gt_p0')
+            p_logger.log(k, float(gt[1]),  name='gt_p1')
+
+        if k >= k_max:
+            pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
+    return obj.free_variables
+
+
+
 
 
 def gradCheckSimple(fun, var, delta):
@@ -296,7 +507,7 @@ def scipyGradCheck(fun, x0):
 
 
 
-def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, callback=None, options=None):
+def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, callback=None, options=None, gt=None):
 
 
     if method == 'dogleg':
@@ -409,7 +620,7 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, ca
     if method == 'minimize':
         x1, fX, i = min_ras.minimize(np.concatenate([free_variable.r.ravel() for free_variable in free_variables]), residuals, scalar_jacfunc, args=(obj, obj_scalar, free_variables), on_step=callback, maxnumfuneval=maxiter)
     elif method == 'SGDMom':
-        return minimize_sgdmom(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'], on_step=callback, maxiters=maxiter)
+        return minimize_Adagrad(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'], on_step=callback, maxiters=maxiter, gt=gt)
     else:
         print ('Invoking Scipy optimize')
         x1 = scipy.optimize.minimize(
