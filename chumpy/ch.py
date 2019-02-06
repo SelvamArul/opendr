@@ -764,17 +764,57 @@ class Ch(object):
         return self.r
 
 
-    ########################################################
-    # Visualization
+    def show_difference(self, label='difference'):
+        from PIL import Image
+        
+        do_stop = False
+        def navigate_tree(self):
+            nonlocal do_stop
+            if do_stop:
+                return
+            if hasattr(self, 'label'):
+                if self.label  == label:
+                    import ipdb; ipdb.set_trace()
+                    _rendered = self.a.r
+                    _rendered = Image.fromarray( (_rendered * 255).astype(np.uint8) )
+                    _rendered.show(title='rendered')
 
+                    _observed = self.b.r
+                    _observed = Image.fromarray( (_observed * 255).astype(np.uint8) )
+                    _observed.show(title='observed')
+
+                    _img = np.abs(self.r)
+                    _img = Image.fromarray( (_img * 255).astype(np.uint8) )
+                    _img.show(title='difference')
+                    do_stop = True
+            for dterm in self.dterms:
+                if hasattr(self, dterm):
+                    dtval = getattr(self, dterm)
+                    if hasattr(dtval, 'dterms') or hasattr(dtval, 'terms'):
+                        navigate_tree (getattr(self, dterm))
+                        if do_stop:
+                            return
+        navigate_tree(self)
+
+    #####################################
+    # Visualization
+    
     def show_tree(self, cachelim=np.inf):
         """Cachelim is in Mb. For any cached jacobians above cachelim, they are also added to the graph. """
         
         import tempfile
         import subprocess
+        
         def string_for(self, my_name):
+            
+            #import ipdb; ipdb.set_trace()
             if hasattr(self, 'label'):
                 my_name = self.label
+                #if my_name == 'difference':
+                #    _img = np.abs(self.r)
+                #    _img = Image.fromarray( (_img * 255).astype(np.uint8) )
+                #    _img.show()
+
             my_name = '%s (%s)' % (my_name, str(self.__class__.__name__))
             result = []
             if not hasattr(self, 'dterms'):
