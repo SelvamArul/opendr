@@ -147,7 +147,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     numWorse = 0
     lrWorse = 0
     while (not stop) and (k < k_max):
-        print (f'{k}-------------------------------------')
+        print ('------',k,'-------------------------------')
         k += 1
 
         pif('beginning iteration %d' % (k,))
@@ -157,8 +157,8 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
             
         dp = col(lr*np.array(arrJ)) + momentum*dp
 
-        print (f'dp {dp}             p {p}')
-        print ('lr ', lr)
+        #print (f'dp {dp}             p {p}')
+        #print ('lr ', lr)
 
         if p.shape != dp.shape:
             import ipdb
@@ -175,7 +175,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
         J = obj.J.copy()
         _loss = obj.r
-        print (f'Best {bestEval}  loss {_loss}')
+        print ('Best {}  loss {}'.format(bestEval, _loss))
         if bestEval > _loss:
             numWorse = 0
             lrWorse = 0
