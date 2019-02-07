@@ -244,7 +244,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     num_unique_ids = len(unique_ids)
 
     if num_unique_ids != len(free_variables):
-       raise Exception('The "free_variables" param contains duplicate variables.')
+        import ipdb; ipdb.set_trace()
+        raise Exception('The "free_variables" param contains duplicate variables.')
  
     obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
     # obj.show_difference()
@@ -357,7 +358,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
                 obj.r
             if lrWorse > 10:
                 lrWorse = 0
-                lr *= 0.9
+                lr *= 0.95
 
         p = col(obj.x.r)
         call_cb()
