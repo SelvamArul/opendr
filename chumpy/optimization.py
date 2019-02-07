@@ -304,7 +304,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     beta_2 = 0.999
 
     while (not stop) and (k < k_max):
-        print (f'{k}-------------------------------------')
+        print ('---------', k,'----------------------------')
         k += 1
         arrJ = J
         if sp.issparse(J):
@@ -342,7 +342,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
         J = obj.J.copy()
         _loss = obj.r
-        print (f'Best {bestEval}  loss {_loss}')
+        print ('Best {}  loss {}'.format(bestEval, _loss))
         if bestEval > _loss:
             numWorse = 0
             lrWorse = 0
