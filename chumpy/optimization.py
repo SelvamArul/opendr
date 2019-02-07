@@ -283,7 +283,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     J = obj.J
     if sp.issparse(J):
         assert(J.nnz > 0)
-    print ('p', p)
+    # print ('p', p)
     if J.shape[1] != p.size:
         import pdb; pdb.set_trace()
     assert(J.shape[1] == p.size)
@@ -326,8 +326,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         # R_hat = R / (1-beta_2 ** k)
         # dp = col( lr * M_hat / (ch.sqrt(R_hat) + eps ) )
 
-        print (f'dp {dp}             p {p}')
-        print ('lr ', lr)
+        # print (f'dp {dp}             p {p}')
+        # print ('lr ', lr)
 
         p_new = p - dp
         if k > 25:
@@ -361,22 +361,19 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
         p = col(obj.x.r)
         call_cb()
-
+        # import ipdb; ipdb.set_trace()
         # visualize optimization process
         obj_logger.log(k, float(_loss), name='loss')
         obj_logger.log(k, bestEval, name='best')
-        p_logger.log(k, float(p[0]),  name='p0')
-        p_logger.log(k, float(p[1]),  name='p1')
-        dp_logger.log(k, float(dp[0]),  name='dp0')
-        dp_logger.log(k, float(dp[1]),  name='dp1')
         lr_logger.log(k, float(lr), name='lr')
         # import ipdb; ipdb.set_trace()
-        j_logger.log(k, float(J[0][0]), name='J0')
-        j_logger.log(k, float(J[0][1]), name='J1')
-        if gt is not None:
-            p_logger.log(k, float(gt[0]),  name='gt_p0')
-            p_logger.log(k, float(gt[1]),  name='gt_p1')
-
+        for _i in range(p.shape[0]):
+            p_logger.log(k, float(p[_i]),  name=f'p{_i}')
+            dp_logger.log(k, float(dp[_i]),  name=f'dp{_i}')
+            j_logger.log(k, float(J[0][_i]), name=f'J{_i}')
+            if gt is not None:
+                p_logger.log(k, float(gt[_i]),  name=f'gt_p{_i}')
+        print ( [_x for _x in p ] )
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
     return obj.free_variables
