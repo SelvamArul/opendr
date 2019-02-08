@@ -374,7 +374,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             j_logger.log(k, float(J[0][_i]), name='J{}'.format(_i))
             if gt is not None:
                 p_logger.log(k, float(gt[_i]),  name='gt_p{}'.format(_i))
-        print ( [_x for _x in p ] )
+        # print ( [_x for _x in p ] )
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
     return obj.free_variables
