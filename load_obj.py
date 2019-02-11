@@ -58,7 +58,7 @@ class Obj:
         return Obj.fromstring(open(filename).read(), has_vertex_coloring=has_vertex_coloring)
 
     @staticmethod
-    def open_as_np_array(filename, has_vertex_coloring=False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def open_as_np_array(filename, has_vertex_coloring=False, origin_to_COM=False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         '''
         Args:
                 filename (str): The filename.
@@ -71,7 +71,7 @@ class Obj:
                 from ModernGL.ext import obj
                 vert, text, norm, face, color = obj.Obj.open_as_np_array('box.obj')
         '''
-        return Obj.fromstring(open(filename).read(), return_np_array=True)
+        return Obj.fromstring(open(filename).read(), return_np_array=True, origin_to_COM=False)
 
     @staticmethod
     def frombytes(data) -> 'Obj':
@@ -91,7 +91,7 @@ class Obj:
         return Obj.fromstring(data.decode())
 
     @staticmethod
-    def fromstring(data, return_np_array=False, has_vertex_coloring=False) -> 'Obj':
+    def fromstring(data, return_np_array=False, has_vertex_coloring=False, origin_to_COM=False) -> 'Obj':
         '''
             Args:
                 data (str): The obj file content.
@@ -172,7 +172,13 @@ class Obj:
             text = np.asarray(text)
             norm = np.asarray(norm)
             color = np.asarray(color)
-            
+
+            if origin_to_COM:
+            # move origin to the center of mass
+                for i in range(3):
+                    vert[:, i ] -= vert[:, i ].mean()
+
+
             face_vtn = np.asarray(face_vtn)
 
             # .obj is 1 based indexing.
