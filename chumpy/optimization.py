@@ -312,6 +312,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         if sp.issparse(J):
             arrJ = J.toarray()
 
+        tm = time.time()
         # Adagrad
         cache += arrJ ** 2
         
@@ -337,12 +338,13 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             lr = lr*decay
         
         obj.x = p_new.ravel()
-
+        print('Params updated in %.2fs' %  (time.time() - tm))
         #if norm(dp) < tol:
         #    print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
         #    stop = True
-
+        tm = time.time()
         J = obj.J.copy()
+        print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
         _loss = obj.r
         print ('Best {}  loss {}'.format(bestEval, _loss))
         if bestEval > _loss:
