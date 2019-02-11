@@ -281,9 +281,11 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     p = col(obj.x.r)
     
     pif('computing Jacobian...')
+    tm = time.time()
     J = obj.J
     if sp.issparse(J):
         assert(J.nnz > 0)
+    print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
     # print ('p', p)
     if J.shape[1] != p.size:
         import pdb; pdb.set_trace()
