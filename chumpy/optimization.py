@@ -75,6 +75,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     dp_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp'))
     lr_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='lr'))
     j_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='jacobian'))
+    dp_norm_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp_norm'))
 
     verbose = False
     labels = {}
@@ -218,7 +219,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
 
 # 
-def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-9, on_step=None, maxiters=None, gt=None):
+def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-7, on_step=None, maxiters=None, gt=None):
     
     eps = 1e-8
     env_name = 'adagrad_test'
@@ -231,6 +232,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     dp_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp'))
     lr_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='lr'))
     j_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='jacobian'))
+    dp_norm_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp_norm'))
 
     verbose = False
     labels = {}
@@ -334,14 +336,17 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         # print ('lr ', lr)
 
         p_new = p - dp
-        if k > 25:
+        if k > 15:
             lr = lr*decay
         
         obj.x = p_new.ravel()
         print('Params updated in %.2fs' %  (time.time() - tm))
-        #if norm(dp) < tol:
-        #    print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
-        #    stop = True
+        if norm(dp) < tol:
+            print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
+            stop = True
+        if float(dp.max()) < 5e-4:
+            print (' stopping do to small max (%f) < (%f) ' % (float(dp.max()), 5e-4))
+            stop = True
         tm = time.time()
         J = obj.J.copy()
         print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
@@ -355,7 +360,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         else:
             numWorse += 1
             lrWorse += 1
-            if numWorse >= 25:
+            if numWorse >= 10:
                 print("Stopping due to increasing evaluation error.")
                 stop = True
                 obj.x = bestParams.ravel()
@@ -371,7 +376,9 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         obj_logger.log(k, float(_loss), name='loss')
         obj_logger.log(k, bestEval, name='best')
         lr_logger.log(k, float(lr), name='lr')
-        # import ipdb; ipdb.set_trace()
+        dp_norm_logger.log(k, float(norm(dp)), name='dp_norm')
+        dp_norm_logger.log(k, float(dp.min()), name='dp_min')
+        dp_norm_logger.log(k, float(dp.max()), name='dp_max')
         for _i in range(p.shape[0]):
             p_logger.log(k, float(p[_i]),  name='p{}'.format(_i))
             dp_logger.log(k, float(dp[_i]),  name='dp{}'.format(_i))
