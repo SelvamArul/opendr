@@ -398,8 +398,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             p_logger.log(k, float(p[_i]),  name='p{}'.format(_i))
             dp_logger.log(k, float(dp[_i]),  name='dp{}'.format(_i))
             j_logger.log(k, float(J[0][_i]), name='J{}'.format(_i))
-            if gt is not None:
-                p_logger.log(k, float(gt[_i]),  name='gt_p{}'.format(_i))
+            # if gt is not None:
+            #     p_logger.log(k, float(gt[_i]),  name='gt_p{}'.format(_i))
         
         for _k in gt_translation.keys():
 
