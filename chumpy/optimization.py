@@ -219,8 +219,20 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
 
 # 
-def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-7, on_step=None, maxiters=None, gt=None):
+def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-7, on_step=None, maxiters=None, gt=None, params=None):
     
+
+    if not isinstance(gt, collections.Mapping) or not isinstance(params, collections.Mapping):
+        import sys
+        sys.exit('gt and params should be a dict of translation and quaterions keys')
+
+    
+    gt_translation = gt['t']
+    gt_quaterions = gt['q']
+
+    ch_params_trans = params['t']
+    ch_params_q = params['q']
+
     eps = 1e-8
     env_name = 'adagrad_test'
     port = 8097
@@ -233,6 +245,9 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     lr_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='lr'))
     j_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='jacobian'))
     dp_norm_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp_norm'))
+    t_error_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='t_error'))
+    q_error_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='q_error'))
+
 
     verbose = False
     labels = {}
@@ -385,6 +400,18 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             j_logger.log(k, float(J[0][_i]), name='J{}'.format(_i))
             if gt is not None:
                 p_logger.log(k, float(gt[_i]),  name='gt_p{}'.format(_i))
+        
+        for _k in gt_translation.keys():
+
+            _t_norm = np.linalg.norm(gt_translation[_k] - ch_params_trans[_k])
+            t_error_logger.log(k, float(_t_norm), name="t_{}".format(_k))
+
+            _q = ch_params_q[_k].copy()
+            if _q[0] < 0:
+                _q *= -1
+            _q_norm = np.linalg.norm(gt_quaterions[_k] - _q)
+            q_error_logger.log(k, float(_q_norm), name="q_{}".format(_k))
+
         # print ( [_x for _x in p ] )
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
@@ -516,7 +543,7 @@ def scipyGradCheck(fun, x0):
 
 
 
-def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, callback=None, options=None, gt=None):
+def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, callback=None, options=None, gt=None, params=None):
 
 
     if method == 'dogleg':
@@ -629,7 +656,7 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, ca
     if method == 'minimize':
         x1, fX, i = min_ras.minimize(np.concatenate([free_variable.r.ravel() for free_variable in free_variables]), residuals, scalar_jacfunc, args=(obj, obj_scalar, free_variables), on_step=callback, maxnumfuneval=maxiter)
     elif method == 'SGDMom':
-        return minimize_Adagrad(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'], on_step=callback, maxiters=maxiter, gt=gt)
+        return minimize_Adagrad(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'], on_step=callback, maxiters=maxiter, gt=gt, params=params)
     else:
         print ('Invoking Scipy optimize')
         x1 = scipy.optimize.minimize(
