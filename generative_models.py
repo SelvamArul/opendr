@@ -200,12 +200,18 @@ class LogGaussianModel(Ch):
         except:
             self.useMask = False
 
-        if self.useMask:
-            visible = self.renderer.indices_image != 0 # assumes the first mesh is the background cube.
-        else:
-            visible = np.ones_like(self.renderer.indices_image.astype(np.bool))
+        # if self.useMask:
+            # visible = self.renderer.indices_image != 0 # assumes the first mesh is the background cube.
+        # else:
+            #visible = np.ones_like(self.renderer.indices_image.astype(np.bool))
 
         # visible = np.array(self.renderer.image_mesh_bool([0])).copy().astype(np.bool)
+
+        # use the mask provided
+        if self.useMask:
+            visible = self.mask
+        else:
+            visible = np.ones_like(self.renderer.indices_image.astype(np.bool))
 
         return logPixelLikelihoodCh(self.groundtruth, self.renderer, visible, 'MASK', self.variances)
 
