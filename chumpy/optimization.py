@@ -422,7 +422,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
         _t_total = 0
         _q_total = 0
-        for _k in gt_translation.keys():
+
+        for _k in ch_params_trans.keys():
 
             # import ipdb; ipdb.set_trace()
             for _i in range( gt_translation[_k].shape[0] ):
