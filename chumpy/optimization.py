@@ -219,7 +219,9 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 
 
 # 
-def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-7, on_step=None, maxiters=None, gt=None, params=None):
+def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-7,
+                    on_step=None, maxiters=None, gt=None, params=None,
+                    resnet_loss=0, self_obj=0):
     
 
     if not isinstance(gt, collections.Mapping) or not isinstance(params, collections.Mapping):
@@ -299,13 +301,17 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     
     pif('computing Jacobian...')
     tm = time.time()
-    J = obj.J
+    if resnet_loss:
+        J = self_obj.jacobian_wrt_rendering()
+    else:
+        J = obj.J
     if sp.issparse(J):
         assert(J.nnz > 0)
     print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
     # print ('p', p)
+    import ipdb; ipdb.set_trace()
     if J.shape[1] != p.size:
-        import pdb; pdb.set_trace()
+        import ipdb; ipdb.set_trace()
     assert(J.shape[1] == p.size)
 
     stop = False
@@ -363,7 +369,11 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             print (' stopping do to small max (%f) < (%f) ' % (float(dp.max()), 5e-4))
             stop = True
         tm = time.time()
-        J = obj.J.copy()
+        if resnet_loss:
+            J = self_obj.jacobian_wrt_rendering()
+        else:
+            J = obj.J.copy()
+        
         print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
         _loss = obj.r
         print ('Best {}  loss {}'.format(bestEval, _loss))
@@ -558,8 +568,9 @@ def scipyGradCheck(fun, x0):
 
 
 
-def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, callback=None, options=None, gt=None, params=None):
-
+def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None,
+            callback=None, options=None, gt=None, params=None, resnet_loss=False,
+            self_obj=None):
 
     if method == 'dogleg':
         if options is None: options = {}
@@ -671,7 +682,9 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None, ca
     if method == 'minimize':
         x1, fX, i = min_ras.minimize(np.concatenate([free_variable.r.ravel() for free_variable in free_variables]), residuals, scalar_jacfunc, args=(obj, obj_scalar, free_variables), on_step=callback, maxnumfuneval=maxiter)
     elif method == 'SGDMom':
-        return minimize_Adagrad(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'], on_step=callback, maxiters=maxiter, gt=gt, params=params)
+        return minimize_Adagrad(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'],
+                    on_step=callback, maxiters=maxiter, gt=gt, params=params, 
+                    resnet_loss=resnet_loss, self_obj=self_obj)
     else:
         print ('Invoking Scipy optimize')
         x1 = scipy.optimize.minimize(
