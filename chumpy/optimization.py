@@ -431,8 +431,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             q_error_logger.log(k, float(_q_norm), name="q_{}".format(_k))
 
             _q_total += _q_norm
-        text_logger.log('T loss: {}'.format(float(_t_total)))
-        text_logger.log('Q loss: {}'.format(float(_q_total)))
+        # text_logger.log('T loss: {}'.format(float(_t_total)))
+        # text_logger.log('Q loss: {}'.format(float(_q_total)))
         # print ('T loss: {}'.format(float(_t_total)))
         # print ('Q loss: {}'.format(float(_q_total)))
         if k >= k_max:
