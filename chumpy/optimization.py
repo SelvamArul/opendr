@@ -395,16 +395,24 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         dp_norm_logger.log(k, float(dp.min()), name='dp_min')
         dp_norm_logger.log(k, float(dp.max()), name='dp_max')
         for _i in range(p.shape[0]):
-            p_logger.log(k, float(p[_i]),  name='p{}'.format(_i))
+            # p_logger.log(k, float(p[_i]),  name='p{}'.format(_i))
             dp_logger.log(k, float(dp[_i]),  name='dp{}'.format(_i))
             j_logger.log(k, float(J[0][_i]), name='J{}'.format(_i))
             # if gt is not None:
             #     p_logger.log(k, float(gt[_i]),  name='gt_p{}'.format(_i))
-        
+
+        _t_total = 0
+        _q_total = 0
         for _k in gt_translation.keys():
 
+            # import ipdb; ipdb.set_trace()
+            for _i in range( gt_translation[_k].shape[0] ):
+                p_logger.log(k, float(gt_translation[_k][_i]), name = 'gt_p{}_{}'.format(_k, _i))
+                p_logger.log(k, float(ch_params_trans[_k][_i]), name = 'p{}_{}'.format(_k, _i))
+            # p_logger.log(k, float( gt_translation[_k]), name = 'gt_p{}'.format(_k))
             _t_norm = np.linalg.norm(gt_translation[_k] - ch_params_trans[_k])
             t_error_logger.log(k, float(_t_norm), name="t_{}".format(_k))
+            _t_total += _t_norm
 
             _q = ch_params_q[_k].copy()
             if _q[0] < 0:
@@ -412,9 +420,16 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             _q_norm = np.linalg.norm(gt_quaterions[_k] - _q)
             q_error_logger.log(k, float(_q_norm), name="q_{}".format(_k))
 
-        # print ( [_x for _x in p ] )
+            _q_total += _q_norm
+        text_logger.log('T loss: {}'.format(float(_t_total)))
+        text_logger.log('Q loss: {}'.format(float(_q_total)))
+        # print ('T loss: {}'.format(float(_t_total)))
+        # print ('Q loss: {}'.format(float(_q_total)))
         if k >= k_max:
             pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
+    print ('Optimized')
+    for _k, _v in ch_params_trans.items():
+        print (_k, _v)
     return obj.free_variables
 
 
