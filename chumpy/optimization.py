@@ -223,7 +223,6 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
                     on_step=None, maxiters=None, gt=None, params=None,
                     resnet_loss=0, self_obj=0):
     
-    import ipdb; ipdb.set_trace()
     if not isinstance(gt, collections.Mapping) or not isinstance(params, collections.Mapping):
         import sys
         sys.exit('gt and params should be a dict of translation and quaterions keys')
@@ -302,6 +301,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     pif('computing Jacobian...')
     tm = time.time()
     if resnet_loss:
+        obj.J
         J, _cnn_loss = self_obj.jacobian_wrt_rendering()
     else:
         J = obj.J
@@ -321,6 +321,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     bestParams = p
 
     if resnet_loss:
+        obj.r
         bestEval =  _cnn_loss
     else:
         bestEval = obj.r
@@ -375,6 +376,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             stop = True
         tm = time.time()
         if resnet_loss:
+            obj.J
             J, _cnn_loss = self_obj.jacobian_wrt_rendering()
             print('_cnn_loss ', _cnn_loss)
         else:
@@ -382,6 +384,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         
         print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
         if resnet_loss:
+            obj.r
             _loss =  _cnn_loss
         else:
             _loss = obj.r
