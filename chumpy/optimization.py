@@ -223,7 +223,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
                     on_step=None, maxiters=None, gt=None, params=None,
                     resnet_loss=0, self_obj=0):
     
-
+    import ipdb; ipdb.set_trace()
     if not isinstance(gt, collections.Mapping) or not isinstance(params, collections.Mapping):
         import sys
         sys.exit('gt and params should be a dict of translation and quaterions keys')
@@ -295,7 +295,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
     # optimization parms
     k_max = maxiters
-
+    k_max = 5
     k = 0
     p = col(obj.x.r)
     
@@ -357,9 +357,10 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         # R_hat = R / (1-beta_2 ** k)
         # dp = col( lr * M_hat / (ch.sqrt(R_hat) + eps ) )
 
-        # print (f'dp {dp}             p {p}')
         # print ('lr ', lr)
-
+        print ('p \n', p)
+        print ('dp \n', dp)
+        print ('self', self_obj.ch_params)
         p_new = p - dp
         if k > 15:
             lr = lr*decay
@@ -375,6 +376,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         tm = time.time()
         if resnet_loss:
             J, _cnn_loss = self_obj.jacobian_wrt_rendering()
+            print('_cnn_loss ', _cnn_loss)
         else:
             J = obj.J.copy()
         
