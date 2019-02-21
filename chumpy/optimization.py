@@ -302,14 +302,13 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     pif('computing Jacobian...')
     tm = time.time()
     if resnet_loss:
-        J, resnet_loss = self_obj.jacobian_wrt_rendering()
+        J, _cnn_loss = self_obj.jacobian_wrt_rendering()
     else:
         J = obj.J
     if sp.issparse(J):
         assert(J.nnz > 0)
     print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
     # print ('p', p)
-    import ipdb; ipdb.set_trace()
     if J.shape[1] != p.size:
         import ipdb; ipdb.set_trace()
     assert(J.shape[1] == p.size)
@@ -322,7 +321,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     bestParams = p
 
     if resnet_loss:
-        bestEval =  resnet_loss
+        bestEval =  _cnn_loss
     else:
         bestEval = obj.r
     
@@ -375,13 +374,13 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             stop = True
         tm = time.time()
         if resnet_loss:
-            J, resnet_loss = self_obj.jacobian_wrt_rendering()
+            J, _cnn_loss = self_obj.jacobian_wrt_rendering()
         else:
             J = obj.J.copy()
         
         print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
         if resnet_loss:
-            _loss - resnet_loss
+            _loss =  _cnn_loss
         else:
             _loss = obj.r
         
