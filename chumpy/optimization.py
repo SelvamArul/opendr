@@ -301,7 +301,6 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     pif('computing Jacobian...')
     tm = time.time()
     if resnet_loss:
-        obj.J
         J, _cnn_loss = self_obj.jacobian_wrt_rendering()
     else:
         J = obj.J
@@ -359,12 +358,11 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         # dp = col( lr * M_hat / (ch.sqrt(R_hat) + eps ) )
 
         # print ('lr ', lr)
-        print ('p \n', p)
-        print ('dp \n', dp)
-        print ('self', self_obj.ch_params)
+        
         p_new = p - dp
         if k > 15:
             lr = lr*decay
+        
         
         obj.x = p_new.ravel()
         print('Params updated in %.2fs' %  (time.time() - tm))
@@ -376,7 +374,6 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             stop = True
         tm = time.time()
         if resnet_loss:
-            obj.J
             J, _cnn_loss = self_obj.jacobian_wrt_rendering()
             print('_cnn_loss ', _cnn_loss)
         else:
