@@ -764,6 +764,28 @@ class Ch(object):
         return self.r
 
 
+    def show_label(self, label='renderer'):
+        from PIL import Image
+        
+        do_stop = False
+        def navigate_tree(self):
+            nonlocal do_stop
+            if do_stop:
+                return
+            if hasattr(self, 'label'):
+                if self.label  == label:
+                    import ipdb; ipdb.set_trace()
+                    
+                    do_stop = True
+            for dterm in self.dterms:
+                if hasattr(self, dterm):
+                    dtval = getattr(self, dterm)
+                    if hasattr(dtval, 'dterms') or hasattr(dtval, 'terms'):
+                        navigate_tree (getattr(self, dterm))
+                        if do_stop:
+                            return
+        navigate_tree(self)
+
     def show_difference(self, label='difference'):
         from PIL import Image
         

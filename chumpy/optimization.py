@@ -266,6 +266,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         raise Exception('The "free_variables" param contains duplicate variables.')
  
     obj = ChInputsStacked(obj=obj, free_variables=free_variables, x=np.concatenate([freevar.r.ravel() for freevar in free_variables]))
+
+    # import ipdb; ipdb.set_trace()
     # obj.show_difference()
 
     # import sys
@@ -287,6 +289,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
     call_cb()
 
+    # obj.show_difference()
+    # obj.show_label()
     # pif = print-if-verbose.
     # can't use "print" because it's a statement, not a fn
     verbose = False
@@ -294,7 +298,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
     # optimization parms
     k_max = maxiters
-    k_max = 5
+
     k = 0
     p = col(obj.x.r)
     
@@ -359,6 +363,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
         # print ('lr ', lr)
         
+        # if k < 3:
+        #     dp = dp * 0.01
         p_new = p - dp
         if k > 15:
             lr = lr*decay
@@ -369,9 +375,9 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         if norm(dp) < tol:
             print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
             stop = True
-        if float(dp.max()) < 5e-4:
-            print (' stopping do to small max (%f) < (%f) ' % (float(dp.max()), 5e-4))
-            stop = True
+        # if abs(float(dp.max())) < 5e-4:
+        #     print (' stopping do to small max (%f) < (%f) ' % (float(dp.max()), 5e-4))
+        #     stop = True
         tm = time.time()
         if resnet_loss:
             J, _cnn_loss = self_obj.jacobian_wrt_rendering()
@@ -380,6 +386,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             J = obj.J.copy()
         
         print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
+        print ('Jacobian \n', J)
+        # import ipdb; ipdb.set_trace()
         if resnet_loss:
             obj.r
             _loss =  _cnn_loss
@@ -390,12 +398,12 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         if bestEval > _loss:
             numWorse = 0
             lrWorse = 0
-            bestEval = obj.r.copy()
+            bestEval = _loss
             bestParams = p.copy()
         else:
             numWorse += 1
             lrWorse += 1
-            if numWorse >= 10:
+            if numWorse >= 15:
                 print("Stopping due to increasing evaluation error.")
                 stop = True
                 obj.x = bestParams.ravel()
@@ -431,8 +439,13 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
                 p_logger.log(k, float(gt_translation[_k][_i]), name = 'gt_p{}_{}'.format(_k, _i))
                 p_logger.log(k, float(ch_params_trans[_k][_i]), name = 'p{}_{}'.format(_k, _i))
             # p_logger.log(k, float( gt_translation[_k]), name = 'gt_p{}'.format(_k))
+
+            
             _t_norm = np.linalg.norm(gt_translation[_k] - ch_params_trans[_k])
             t_error_logger.log(k, float(_t_norm), name="t_{}".format(_k))
+            if _t_norm < 0.05:
+                pass
+                # import ipdb; ipdb.set_trace()
             _t_total += _t_norm
 
             _q = ch_params_q[_k].copy()
