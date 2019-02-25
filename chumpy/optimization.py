@@ -460,7 +460,9 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         # print ('T loss: {}'.format(float(_t_total)))
         # print ('Q loss: {}'.format(float(_q_total)))
         if k >= k_max:
-            pif('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
+            obj.x = bestParams.ravel()
+            obj.r
+            print('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
     print ('Optimized')
     for _k, _v in ch_params_trans.items():
         print (_k, _v)
