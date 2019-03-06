@@ -439,6 +439,10 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
 
         for _k in ch_params_trans.keys():
 
+            if _k not in gt_quaterions.keys():
+                print (_k, 'is not in ground truth')
+                continue
+            
             # import ipdb; ipdb.set_trace()
             for _i in range( gt_quaterions[_k].shape[0] ):
                 p_logger.log(k, float(gt_quaterions[_k][_i]), name = 'gt_q{}_{}'.format(_k, _i))
@@ -448,6 +452,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
                 p_logger.log(k, float(gt_translation[_k][_i]), name = 'gt_t{}_{}'.format(_k, _i))
                 p_logger.log(k, float(ch_params_trans[_k][_i]), name = 't{}_{}'.format(_k, _i))
             # p_logger.log(k, float( gt_translation[_k]), name = 'gt_p{}'.format(_k))
+
+            
 
             
             _t_norm = np.linalg.norm(gt_translation[_k] - ch_params_trans[_k])
