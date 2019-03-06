@@ -235,7 +235,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     ch_params_q = params['q']
 
     eps = 1e-8
-    env_name = 'adagrad_test'
+    env_name = 'adagrad_test_WIP1'
     port = 8097
     vis = visdom.Visdom(server='http://localhost', port=port, env=env_name)
     vis.close(env=env_name)
@@ -245,9 +245,11 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     dp_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp'))
     lr_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='lr'))
     j_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='jacobian'))
+    cache_logger  = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='cache'))
     dp_norm_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='dp_norm'))
     t_error_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='t_error'))
     q_error_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='q_error'))
+    angle_error_logger = VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='angle_error'))
 
 
     verbose = False
@@ -310,7 +312,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         J = obj.J
     if sp.issparse(J):
         assert(J.nnz > 0)
-    print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
+    # print('Jacobian (%dx%d) computed in %.2fs' % (J.shape[0], J.shape[1], time.time() - tm))
     # print ('p', p)
     if J.shape[1] != p.size:
         import ipdb; ipdb.set_trace()
@@ -337,7 +339,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     beta_2 = 0.999
 
     while (not stop) and (k < k_max):
-        print ('---------', k,'----------------------------')
+        # print ('---------', k,'----------------------------')
         k += 1
         arrJ = J
         if sp.issparse(J):
@@ -371,7 +373,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         
         
         obj.x = p_new.ravel()
-        print('Params updated in %.2fs' %  (time.time() - tm))
+        # print('Params updated in %.2fs' %  (time.time() - tm))
         if norm(dp) < tol:
             print('stopping due to small update (%f) < (%f) ' % (norm(dp), tol))
             stop = True
@@ -381,12 +383,12 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         tm = time.time()
         if resnet_loss:
             J, _cnn_loss = self_obj.jacobian_wrt_rendering()
-            print('_cnn_loss ', _cnn_loss)
+            # print('_cnn_loss ', _cnn_loss)
         else:
             J = obj.J.copy()
         
-        print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
-        print ('Jacobian \n', J)
+        # print('Jacobian (%dx%d) computed in %.2fs' %  (J.shape[0], J.shape[1], time.time() - tm))
+        # print ('Jacobian \n', J)
         # import ipdb; ipdb.set_trace()
         if resnet_loss:
             obj.r
@@ -394,7 +396,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         else:
             _loss = obj.r
         
-        print ('Best {}  loss {}'.format(bestEval, _loss))
+        # print ('Best {}  loss {}'.format(bestEval, _loss))
         if bestEval > _loss:
             numWorse = 0
             lrWorse = 0
@@ -422,10 +424,13 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         dp_norm_logger.log(k, float(norm(dp)), name='dp_norm')
         dp_norm_logger.log(k, float(dp.min()), name='dp_min')
         dp_norm_logger.log(k, float(dp.max()), name='dp_max')
+
+        cache_t = cache.T
         for _i in range(p.shape[0]):
             # p_logger.log(k, float(p[_i]),  name='p{}'.format(_i))
             dp_logger.log(k, float(dp[_i]),  name='dp{}'.format(_i))
             j_logger.log(k, float(J[0][_i]), name='J{}'.format(_i))
+            cache_logger.log(k, float(cache_t[_i]), name='Cache{}'.format(_i))
             # if gt is not None:
             #     p_logger.log(k, float(gt[_i]),  name='gt_p{}'.format(_i))
 
@@ -435,9 +440,13 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         for _k in ch_params_trans.keys():
 
             # import ipdb; ipdb.set_trace()
+            for _i in range( gt_quaterions[_k].shape[0] ):
+                p_logger.log(k, float(gt_quaterions[_k][_i]), name = 'gt_q{}_{}'.format(_k, _i))
+                p_logger.log(k, float(ch_params_q[_k][_i]), name = 'q{}_{}'.format(_k, _i))
+            
             for _i in range( gt_translation[_k].shape[0] ):
-                p_logger.log(k, float(gt_translation[_k][_i]), name = 'gt_p{}_{}'.format(_k, _i))
-                p_logger.log(k, float(ch_params_trans[_k][_i]), name = 'p{}_{}'.format(_k, _i))
+                p_logger.log(k, float(gt_translation[_k][_i]), name = 'gt_t{}_{}'.format(_k, _i))
+                p_logger.log(k, float(ch_params_trans[_k][_i]), name = 't{}_{}'.format(_k, _i))
             # p_logger.log(k, float( gt_translation[_k]), name = 'gt_p{}'.format(_k))
 
             
@@ -448,13 +457,35 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
                 # import ipdb; ipdb.set_trace()
             _t_total += _t_norm
 
-            _q = ch_params_q[_k].copy()
+            _q = ch_params_q[_k].copy().x
             if _q[0] < 0:
                 _q *= -1
-            _q_norm = np.linalg.norm(gt_quaterions[_k] - _q)
+            
+            _q_gt = gt_quaterions[_k].copy().x
+            if _q_gt[0] < 0:
+                _q_gt *= -1
+             
+            _q_norm = np.linalg.norm(_q_gt - _q)
+
             q_error_logger.log(k, float(_q_norm), name="q_{}".format(_k))
 
+            # compute angle between quaternions
+            
+            _q_gt_inv = _q_gt.copy()
+            _q_gt_inv[1:] *= -1
+
+            _q /= np.linalg.norm(_q)
+
+            _q_res = quaternion_product(_q_gt_inv, _q)
+            
+            # clamp between -1 and 1
+            _q_0 = max(min(_q_res[0], 1), -1)
+            
+            _theta = 2 * np.arccos(_q_0)
+            _theta  = (_theta / np.pi) * 180      
+            angle_error_logger.log(k, float(_theta), name="q_{}".format(_k))
             _q_total += _q_norm
+
         # text_logger.log('T loss: {}'.format(float(_t_total)))
         # text_logger.log('Q loss: {}'.format(float(_q_total)))
         # print ('T loss: {}'.format(float(_t_total)))
@@ -463,13 +494,25 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             obj.x = bestParams.ravel()
             obj.r
             print('stopping because max number of user-specified iterations (%d) has been met' % (k_max,))
-    print ('Optimized')
-    for _k, _v in ch_params_trans.items():
-        print (_k, _v)
+        # print (self_obj.ch_params_q)
+        # for _k, _v in self_obj.ch_params_q.items():
+        #     print ( np.linalg.norm(_v))
+    # print ('Optimized')
+    # for _k, _v in ch_params_trans.items():
+        # print (_k, _v)
     return obj.free_variables
 
 
 
+def quaternion_product(quaternion1, quaternion0):
+	w0, x0, y0, z0 = quaternion0[0],quaternion0[1],quaternion0[2],quaternion0[3]
+	w1, x1, y1, z1 = quaternion1[0],quaternion1[1],quaternion1[2],quaternion1[3]
+	res = np.ones(4)
+	res[0] = -x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0
+	res[1] = x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0
+	res[2] = -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0
+	res[3] = x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0
+	return res
 
 
 def gradCheckSimple(fun, var, delta):
