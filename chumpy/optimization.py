@@ -466,8 +466,10 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             _q = ch_params_q[_k].copy().x
             if _q[0] < 0:
                 _q *= -1
+            else:
+                _q *= 1
             
-            _q_gt = gt_quaterions[_k].copy().x
+            _q_gt = gt_quaterions[_k].copy()
             if _q_gt[0] < 0:
                 _q_gt *= -1
              
