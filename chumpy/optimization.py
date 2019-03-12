@@ -221,7 +221,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
 # 
 def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1e-7,
                     on_step=None, maxiters=None, gt=None, params=None,
-                    resnet_loss=0, self_obj=0):
+                    resnet_loss=0, self_obj=0, env_name='ycb_vis'):
     
     if not isinstance(gt, collections.Mapping) or not isinstance(params, collections.Mapping):
         import sys
@@ -235,7 +235,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     ch_params_q = params['q']
 
     eps = 1e-8
-    env_name = 'adagrad_test_WIP1'
+    env_name = env_name
     port = 8097
     vis = visdom.Visdom(server='http://localhost', port=port, env=env_name)
     vis.close(env=env_name)
@@ -647,7 +647,7 @@ def scipyGradCheck(fun, x0):
 
 def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None,
             callback=None, options=None, gt=None, params=None, resnet_loss=False,
-            self_obj=None):
+            self_obj=None, env_name = 'ycb_viz'):
 
     if method == 'dogleg':
         if options is None: options = {}
@@ -761,7 +761,7 @@ def minimize(fun, x0, method='dogleg', bounds=None, constraints=(), tol=None,
     elif method == 'SGDMom':
         return minimize_Adagrad(obj=fun, free_variables=x0 , lr=options['lr'], momentum=options['momentum'], decay=options['decay'],
                     on_step=callback, maxiters=maxiter, gt=gt, params=params, 
-                    resnet_loss=resnet_loss, self_obj=self_obj)
+                    resnet_loss=resnet_loss, self_obj=self_obj, env_name=env_name)
     else:
         print ('Invoking Scipy optimize')
         x1 = scipy.optimize.minimize(
