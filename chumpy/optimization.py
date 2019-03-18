@@ -68,7 +68,7 @@ def minimize_sgdmom(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=1
     env_name = 'test'
     port = 8097
     vis = visdom.Visdom(server='http://localhost', port=port, env=env_name)
-    vis.close(env=env_name)
+    # vis.close(env=env_name)
 
     obj_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='obj'))
     p_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='p'))
@@ -238,7 +238,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
     env_name = env_name
     port = 8097
     vis = visdom.Visdom(server='http://localhost', port=port, env=env_name)
-    vis.close(env=env_name)
+    # vis.close(env=env_name)
 
     obj_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='obj'))
     p_logger =  VisdomPlotLogger('line', env=env_name, port=port, opts=dict(title='p'))
@@ -344,7 +344,6 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         arrJ = J
         if sp.issparse(J):
             arrJ = J.toarray()
-
         tm = time.time()
         # Adagrad
         cache += arrJ ** 2
@@ -438,8 +437,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         _q_total = 0
 
         for _k in ch_params_trans.keys():
-
             if _k not in gt_quaterions.keys():
+                import ipdb; ipdb.set_trace()
                 print (_k, 'is not in ground truth')
                 continue
             

@@ -1689,6 +1689,14 @@ class TexturedRenderer(ColoredRenderer):
 
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
         view_mtx = self.camera.openglMat.dot(np.asarray(np.vstack((self.camera.view_matrix, np.array([0, 0, 0, 1]))),np.float32))
+        # import ipdb; ipdb.set_trace()
+        # print ('Before\n ',self.projectionMatrix) 
+
+        # FIXME
+        # self.projectionMatrix = np.array([[ 3.3337,  0.0000, -0.0219,  0.0000],
+        #         [ 0.0000,  4.4449,  0.0055,  0.0000],
+        #         [ 0.0000,  0.0000,  -1.0020, -0.0200],
+        #         [ 0.0000,  0.0000,  -1.0000,  0.0000]])
         MVP = np.dot(self.projectionMatrix, view_mtx)
 
         for mesh in range(len(self.f_list)):
