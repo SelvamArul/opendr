@@ -492,10 +492,10 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
             _theta  = (_theta / np.pi) * 180
             
             # If we turn more than 180°, we can turn into the other direction
-            if _theta >= np.pi:
-                _theta = _theta - 2 * np.pi
+            # if _theta >= np.pi:
+            #    _theta = _theta - 2 * np.pi
 	
-            _theta = abs(_theta)
+            #_theta = abs(_theta)
 
             angle_error_logger.log(k, float(_theta), name="q_{}".format(_k))
             _q_total += _q_norm
