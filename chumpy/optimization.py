@@ -367,8 +367,8 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         # if k < 3:
         #     dp = dp * 0.01
         p_new = p - dp
-        if k > 15:
-            lr = lr*decay
+        # if k > 15:
+            # lr = lr*decay
         
         
         obj.x = p_new.ravel()
@@ -404,7 +404,7 @@ def minimize_Adagrad(obj, free_variables, lr=0.01, momentum=0.9, decay=0.9, tol=
         else:
             numWorse += 1
             lrWorse += 1
-            if numWorse >= 15:
+            if numWorse >= 25:
                 print("Stopping due to increasing evaluation error.")
                 stop = True
                 obj.x = bestParams.ravel()
